@@ -1,0 +1,33 @@
+# Datasource de negocio para Grafana (T-020, ADR-0010).
+#
+# Lee la base de negocio con `bi_reader`, que solo puede consultar las vistas
+# bi_* (db/vistas_bi.sql) y trabaja en transacciones de solo lectura. Los
+# valores salen del entorno del contenedor (el .env de la raíz); ninguna
+# contraseña se escribe aquí. Mismo modo TLS que la base interna de Grafana,
+# porque ambas viven en la misma instancia (local: disable; RDS: require).
+apiVersion: 1
+
+deleteDatasources:
+  - name: Cofrial BI
+    orgId: 1
+
+datasources:
+  - name: Cofrial BI
+    uid: cofrial-bi
+    type: grafana-postgresql-datasource
+    access: proxy
+    orgId: 1
+    isDefault: true
+    editable: false
+    url: ${DB_HOST}:${DB_PORT}
+    user: ${BI_DB_USERNAME}
+    jsonData:
+      database: ${DB_DATABASE}
+      sslmode: ${GF_DATABASE_SSL_MODE}
+      postgresVersion: 1600
+      timescaledb: false
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: ${BI_DB_PASSWORD}

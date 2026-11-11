@@ -1,6 +1,7 @@
 #!/bin/sh
 # =============================================================================
-# Aplica roles, permisos y vistas de db/ sobre la base de negocio (T-005).
+# Aplica roles, permisos y vistas de db/ sobre la base de negocio (T-005,
+# vistas de BI en T-020).
 #
 # Toma todo del entorno (el .env de la raíz) y se conecta con el usuario
 # maestro. Idempotente: correrlo después de cada `migrate`.
@@ -42,6 +43,7 @@ psql -X -q \
 # Las vistas dependen de las tablas: antes de la primera migración no se crean.
 if [ "$(psql -X -tAc "select to_regclass('camion') is not null")" = "t" ]; then
     psql -X -q -v iot_user="${IOT_DB_USERNAME:-iot_writer}" -f "$dir/vistas_iot.sql"
+    psql -X -q -v bi_user="${BI_DB_USERNAME:-bi_reader}" -f "$dir/vistas_bi.sql"
 else
-    echo "aplicar.sh: aún no hay tablas; vistas_iot.sql se aplicará después de migrar."
+    echo "aplicar.sh: aún no hay tablas; vistas_iot.sql y vistas_bi.sql se aplicarán después de migrar."
 fi

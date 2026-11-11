@@ -491,7 +491,7 @@ Además de las 34 tablas de negocio, Laravel crea sus propias tablas de soporte 
 | --- | --- | --- |
 | `app_rw` | Lectura y escritura sobre el esquema de negocio; sin `UPDATE`/`DELETE` en los historiales y sin escribir `telemetria` | Laravel (web y worker) |
 | `iot_writer` | `INSERT` en `telemetria` y `alerta`; `SELECT` en la vista `iot_umbral_camion` | Simulador IoT |
-| `bi_reader` | `SELECT` sobre las vistas `bi_*` | Grafana |
+| `bi_reader` | `SELECT` sobre las vistas `bi_*` de [`db/vistas_bi.sql`](../db/vistas_bi.sql); solo lectura por defecto | Grafana |
 | `grafana_rw` | Dueño de la base aparte `grafana`; sin acceso a la base de negocio | Grafana (estado interno) |
 
 Se crean con [`db/roles.sql`](../db/roles.sql) usando el usuario maestro, que es además el dueño del esquema y corre las migraciones (`php artisan migrate --database=pgsql_admin`); `app_rw` no puede crear ni borrar tablas. Detalle y orden de aplicación en [`db/README.md`](../db/README.md).

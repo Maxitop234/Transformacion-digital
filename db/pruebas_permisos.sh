@@ -33,9 +33,33 @@ clave() {
     esac
 }
 
+# bi_reader trabaja por defecto en transacciones de solo lectura (roles.sql), y
+# ese error (25006) llega antes que el de permisos. Para probar los permisos
+# por sí solos se desactiva en la sesión; `por_defecto` prueba la configuración
+# real del rol.
+OPCIONES_PRUEBA='-c default_transaction_read_only=off'
+
 # sql <usuario> <base> <sentencia>: ejecuta y deja la salida en $salida.
 sql() {
-    salida=$(PGPASSWORD=$(clave "$1") psql -X -q -tA -v ON_ERROR_STOP=1 -v VERBOSITY=verbose -U "$1" -d "$2" -c "$3" 2>&1)
+    salida=$(PGOPTIONS="${opciones-$OPCIONES_PRUEBA}" PGPASSWORD=$(clave "$1") psql -X -q -tA -v ON_ERROR_STOP=1 -v VERBOSITY=verbose -U "$1" -d "$2" -c "$3" 2>&1)
+}
+
+# igual <usuario> <base> <descripción> <sentencia> <esperado>: la salida debe ser exactamente <esperado>.
+igual() {
+    total=$((total + 1))
+    if sql "$1" "$2" "$4" && [ "$salida" = "$5" ]; then
+        echo "  ok   $1 $3"
+    else
+        fallas=$((fallas + 1))
+        echo "  FALLA $1 debería $3 (se obtuvo: $(echo "$salida" | head -n 2 | tr '\n' ' '))"
+    fi
+}
+
+# por_defecto <función> <args...>: corre la comprobación sin opciones de sesión.
+por_defecto() {
+    opciones=""
+    "$@"
+    unset opciones
 }
 
 puede() {
@@ -49,13 +73,14 @@ puede() {
     fi
 }
 
-# no_puede: exige que falle por falta de privilegios (SQLSTATE 42501 o conexión denegada).
+# no_puede: exige que falle por falta de privilegios (SQLSTATE 42501 o conexión
+# denegada) o, sin opciones de sesión, por transacción de solo lectura (25006).
 no_puede() {
     total=$((total + 1))
     if sql "$1" "$2" "$4"; then
         fallas=$((fallas + 1))
         echo "  FALLA $1 pudo $3"
-    elif echo "$salida" | grep -Eq '42501|permission denied|permiso denegado'; then
+    elif echo "$salida" | grep -Eq '42501|25006|permission denied|permiso denegado|read-only transaction'; then
         echo "  ok   $1 no puede $3"
     else
         fallas=$((fallas + 1))
@@ -107,7 +132,22 @@ for par in $salida; do
     no_puede "$BI" "$BASE" "borrar en $tabla" "delete from \"$tabla\" where false"
 done
 no_puede "$BI" "$BASE" "leer cliente directamente" "select * from cliente limit 1"
+no_puede "$BI" "$BASE" "leer telemetría directamente" "select * from telemetria limit 1"
 no_puede "$BI" "$BASE" "crear tablas" "create table prueba_t005 (x int)"
+# Vistas bi_* (T-020): las lee todas y no escribe a través de ellas.
+admin "select string_agg(viewname, ' ' order by viewname) from pg_views where schemaname = 'public' and viewname like 'bi\_%'"
+VISTAS_BI="$salida"
+if [ -n "$VISTAS_BI" ]; then
+    for vista in $VISTAS_BI; do
+        puede "$BI" "$BASE" "leer $vista" "select * from \"$vista\" limit 1"
+    done
+    no_puede "$BI" "$BASE" "insertar a través de bi_telemetria" "insert into bi_telemetria (camion_id, temp_camara, combustible_pct) values ('$CAMION', 4, 50)"
+    no_puede "$BI" "$BASE" "borrar a través de bi_telemetria" "delete from bi_telemetria where false"
+    por_defecto igual "$BI" "$BASE" "trabaja en solo lectura por defecto" "show default_transaction_read_only" "on"
+    por_defecto no_puede "$BI" "$BASE" "escribir aunque tuviera permiso (solo lectura)" "create temporary table prueba_t020 (x int)"
+else
+    echo "  (aún no hay vistas bi_*: corre db/aplicar.sh después de migrar)"
+fi
 
 echo "== $APP"
 puede "$APP" "$BASE" "leer y escribir datos de negocio" \
