@@ -41,6 +41,10 @@ Route::middleware(['auth', 'can:portal.comprar'])->group(function () {
     // Tickets (T-018): «Reportar un problema», opcionalmente sobre un pedido propio.
     Route::get('/tickets', [Portal\TicketController::class, 'index'])->name('portal.tickets');
     Route::post('/tickets', [Portal\TicketController::class, 'store'])->middleware('throttle:10,1')->name('portal.tickets.store');
+
+    // Asistente IA (T-021): JSON; el servidor arma el contexto y llama a la IA.
+    Route::get('/asistente', [Portal\AsistenteController::class, 'show'])->name('portal.asistente');
+    Route::post('/asistente/mensajes', [Portal\AsistenteController::class, 'store'])->middleware('throttle:asistente')->name('portal.asistente.mensajes');
 });
 
 // Sesión (clientes y personal).

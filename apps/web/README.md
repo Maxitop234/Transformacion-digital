@@ -193,10 +193,19 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 ## Tickets (T-018)
 
 - **`App\Domain\Crm\CrearTicket`**: único punto de creación (portal, rechazo de carga en `RegistrarResultadoParada` y, en T-021, el asistente). Nace `abierto`, `sin_clasificar`/`media` (salvo que una regla fije categoría y prioridad, como la carga rechazada: `reclamo`/`alta`), `clasificado_por_ia = false` y con el vendedor del cliente. Rechaza un pedido de otro cliente.
-- **Evento `App\Events\TicketCreado`** (`ShouldDispatchAfterCommit`, solo `idTicket`): aún no tiene listeners. T-021 le engancha la clasificación con IA en un listener encolado y debe saltarse los tickets que ya no están `sin_clasificar`.
+- **Evento `App\Events\TicketCreado`** (`ShouldDispatchAfterCommit`, solo `idTicket`): `AppServiceProvider` encola `ClasificarTicketConIa` (T-021).
 - **`GestionarTicket`**: clasificar, reasignar, cambiar estado y cerrar con bloqueo de fila. Ver las reglas en API.md §1.4.
 - **Controladores:** `Portal\TicketController` (`/tickets`, el formulario también está en el detalle del pedido) y `Crm\TicketController` (`/crm/tickets`, gate `tickets`). Todo con `visiblePara()` (RN-10).
 - Los tickets aparecen en la ficha del cliente, en el detalle del pedido del CRM y en el del portal.
+
+## Integración de IA (T-021)
+
+- **Proveedor** (ADR-0015): `App\Domain\Ia\ClienteIa`, implementada por `ClienteIaCompatibleOpenAi` (Groq por defecto, Gemini de respaldo; `config/ia.php`). Variables: `AI_ENABLED`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_URL_BASE`, `AI_TIMEOUT_SEGUNDOS`, `AI_ASISTENTE_POR_MINUTO` y `AI_ASISTENTE_POR_DIA`. En Docker van en el `.env` de la raíz; hay que reiniciar `web` y `worker` al cambiarlas.
+- **Clasificación:** `TicketCreado` → `App\Jobs\ClasificarTicketConIa` (cola `database`, la procesa el servicio `worker`) → `App\Domain\Ia\ClasificarTicket`. Valida contra `Ticket::CATEGORIAS` y `PRIORIDADES`, y escribe solo si el ticket sigue `sin_clasificar`. Ante `IaNoDisponible` reintenta dos veces; después deja el ticket para clasificación manual.
+- **Asistente:** `GET /asistente` y `POST /asistente/mensajes` (`Portal\AsistenteController` → `AsistentePortal`), con `throttle:asistente` por usuario.
+- **Datos personales:** `FiltroDatosPersonales` enmascara RUT, correos, teléfonos y nombres conocidos (RN-11).
+- **Tests:** `tests/Support/ClienteIaFalso` (se registra con `$this->app->instance(ClienteIa::class, …)`) y `Http::fake`. `phpunit.xml` fuerza `AI_API_KEY` vacía.
+- **Probar con la API real:** pon la clave en `AI_API_KEY` del `.env` de la raíz, reinicia `web` y `worker` y crea un ticket desde `/tickets`.
 
 ## Panel del CRM (T-013)
 
@@ -236,7 +245,7 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - La zona horaria de la aplicación y de la sesión de PostgreSQL es `APP_TIMEZONE` (`America/Santiago`). Las columnas `TIMESTAMPTZ` guardan el instante absoluto (UTC), así que no hay ambigüedad al leerlas desde otros componentes.
 - Sesiones, caché, colas y modo mantenimiento usan la base (`database`); ninguno usa `file`.
 - Cookie de sesión `HttpOnly` y `SameSite=lax` (valores de Laravel); `SESSION_SECURE_COOKIE=true` en AWS para que viaje solo por HTTPS.
-- Parámetros de negocio (pedido mínimo, minutos de reserva, horas de abandono del carrito, umbrales del panel del CRM, IVA) en `config/negocio.php`, leídos de `PEDIDO_MINIMO_B2C`, `PEDIDO_MINIMO_B2B`, `RESERVA_STOCK_MINUTOS_B2C`, `CARRITO_ABANDONO_HORAS`, `OPORTUNIDAD_SIN_ACTIVIDAD_DIAS`, `CONVERSION_VENTANA_DIAS` e `IVA_PCT`.
+- IA externa en `config/ia.php` (ver «Integración de IA»). Parámetros de negocio (pedido mínimo, minutos de reserva, horas de abandono del carrito, umbrales del panel del CRM, IVA) en `config/negocio.php`, leídos de `PEDIDO_MINIMO_B2C`, `PEDIDO_MINIMO_B2B`, `RESERVA_STOCK_MINUTOS_B2C`, `CARRITO_ABANDONO_HORAS`, `OPORTUNIDAD_SIN_ACTIVIDAD_DIAS`, `CONVERSION_VENTANA_DIAS` e `IVA_PCT`.
 
 ## Referencias
 

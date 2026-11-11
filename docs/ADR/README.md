@@ -22,7 +22,7 @@ Los ADR 0001 a 0011 provienen de las fichas de decisión del informe de diseño 
 | [0012](0012-monorepo.md) | Monorepo con documentación y tareas orientadas a agentes | Aceptada | 2026-11-11 |
 | [0013](0013-monolito-laravel.md) | Portal y CRM como un monolito modular en Laravel | Aceptada | 2026-11-05 |
 | [0014](0014-simulador-iot-python.md) | Simulador IoT en Python | Propuesta | 2026-11-11 |
-| [0015](0015-proveedor-ia.md) | Proveedor de la API de IA | Propuesta | 2026-11-11 |
+| [0015](0015-proveedor-ia.md) | Proveedor de la API de IA | Aceptada | 2026-11-11 |
 | [0016](0016-esquema-por-migraciones.md) | Esquema en español gestionado por migraciones de Laravel | Aceptada | 2026-11-11 |
 | [0017](0017-telemetria-sin-particionar.md) | Telemetría sin particionar en el prototipo | Aceptada | 2026-11-10 |
 

@@ -116,9 +116,11 @@ Respuesta `200`:
 }
 ```
 
-- El servidor arma el contexto con datos del propio cliente (estado de pedidos, catálogo) y llama a la API externa; el navegador nunca habla con la IA directamente.
+- Solo clientes (`cliente_b2c`, `cliente_b2b`); la página está en `GET /asistente`. `mensaje`: hasta 500 caracteres (422 si falta).
+- El servidor arma el contexto con datos del propio cliente y llama a la API externa; el navegador nunca habla con la IA directamente. El contexto lleva sus 10 pedidos más recientes y los que nombre (estado, fechas, ventana, camión, parada, rupturas de frío) y hasta 5 productos activos que coincidan con su mensaje. Un número de pedido ajeno solo aparece como «no encontrado».
 - Si la IA no puede resolver, o la API falla, responde con `derivado_a_ticket: true` y crea el ticket.
-- Límite de uso por usuario para proteger la cuota gratuita: `429` al superarlo.
+- Límite de uso por usuario para proteger la cuota gratuita (`AI_ASISTENTE_POR_MINUTO`, 5 por defecto, y `AI_ASISTENTE_POR_DIA`, 50): `429` al superarlo.
+- Si deriva, el ticket queda con asunto «Consulta desde el asistente» y el mensaje del cliente como descripción; luego se clasifica como cualquier otro.
 
 ## 2. Contrato de telemetría IoT
 
@@ -169,7 +171,7 @@ VALUES (:id_telemetria, 'ruptura_frio', 'alta', 'abierta');
 
 ## 3. Contrato con la API de IA externa
 
-Proveedor por definir (ADR-0015). La aplicación depende de una interfaz interna, no del proveedor.
+Groq con `openai/gpt-oss-20b` y Gemini de respaldo, ambos por su endpoint compatible con OpenAI (`POST {AI_URL_BASE}/chat/completions`, `response_format` `json_schema` estricto, temperatura 0; ADR-0015). La aplicación depende de la interfaz `App\Domain\Ia\ClienteIa`, no del proveedor.
 
 ### 3.1 Clasificación de tickets
 
@@ -186,11 +188,13 @@ Entrada que se envía (después de depurar datos personales):
 Salida que se exige al modelo (JSON estricto, validado antes de guardar):
 
 ```json
-{ "categoria": "calidad", "prioridad": "alta" }
+{ "categoria": "reclamo", "prioridad": "alta" }
 ```
 
-- `categoria` y `prioridad` deben pertenecer a las listas de [`DATA_MODEL.md`](DATA_MODEL.md#ticket). Una respuesta fuera de lista se descarta y el ticket queda `sin_clasificar` con `clasificado_por_ia = false`.
-- Tiempo máximo de espera configurable (`AI_TIMEOUT_SEGUNDOS`); hasta dos reintentos en el worker.
+- La entrada va delimitada entre `<ticket>` y `</ticket>`. No lleva identificadores del cliente ni del pedido, solo si existe uno.
+- `categoria` (`consulta`, `reclamo`, `cambio_pedido`, `cotizacion`, `otro`) y `prioridad` deben pertenecer a las listas de [`DATA_MODEL.md`](DATA_MODEL.md#ticket). Una respuesta fuera de lista se descarta y el ticket queda `sin_clasificar` con `clasificado_por_ia = false`.
+- Solo se clasifican tickets que siguen `sin_clasificar`: los de regla (carga rechazada) y los que un ejecutivo clasificó mientras esperaban no se tocan.
+- Tiempo máximo de espera configurable (`AI_TIMEOUT_SEGUNDOS`, 15 por defecto); hasta dos reintentos en el worker (cola `database`), con espera de 10 y 20 segundos.
 
 ### 3.2 Reglas comunes
 

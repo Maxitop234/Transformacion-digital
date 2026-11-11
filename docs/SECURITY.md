@@ -92,11 +92,12 @@ Controles de aplicación exigidos en toda tarea que toque la web:
 
 ## 9. IA externa
 
-- No se envían RUT, nombres, razón social, correos, teléfonos ni direcciones (RN-11). El texto libre del cliente pasa por un filtro que enmascara esos patrones antes de salir.
+- No se envían RUT, nombres, razón social, correos, teléfonos ni direcciones (RN-11). El texto libre del cliente pasa por `App\Domain\Ia\FiltroDatosPersonales`, que enmascara RUT, correos, teléfonos y los nombres conocidos del cliente y sus contactos antes de salir. El contexto del asistente se arma solo con identificadores internos, estados, fechas y camión.
 - El texto del cliente se trata como dato: el prompt lo delimita y la respuesta se valida contra una lista cerrada de valores. Una instrucción escrita por un cliente dentro de un ticket no puede cambiar el comportamiento del sistema más allá de una clasificación errónea.
 - El asistente solo recibe datos del cliente que pregunta, obtenidos por el servidor con sus mismos permisos.
 - La IA no ejecuta acciones: no cancela pedidos, no cambia precios ni estados. Solo responde o deriva a un ticket.
-- Límite de uso por usuario para proteger la cuota gratuita.
+- Límite de uso por usuario para proteger la cuota gratuita (`throttle:asistente`).
+- La clave (`AI_API_KEY`) vive solo en el `.env` del servidor; los tests la fuerzan vacía y nunca llaman a la API real.
 
 ## 10. Continuidad
 

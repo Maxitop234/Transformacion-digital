@@ -42,6 +42,9 @@
         <server name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
         <server name="SESSION_DRIVER" value="array" force="true"/>
+        <!-- Los tests nunca llaman a la IA real: usan ClienteIaFalso o Http::fake (T-021). -->
+        <env name="AI_API_KEY" value="" force="true"/>
+        <server name="AI_API_KEY" value="" force="true"/>
         <env name="PULSE_ENABLED" value="false" force="true"/>
         <server name="PULSE_ENABLED" value="false" force="true"/>
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>

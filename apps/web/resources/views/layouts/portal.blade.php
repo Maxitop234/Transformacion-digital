@@ -21,6 +21,7 @@
                         <a href="{{ route('portal.carrito') }}" class="text-sky-700 hover:underline" data-enlace-carrito>Carrito</a>
                         <a href="{{ route('portal.mis-pedidos') }}" class="text-sky-700 hover:underline" data-enlace-mis-pedidos>Mis pedidos</a>
                         <a href="{{ route('portal.direcciones') }}" class="text-sky-700 hover:underline">Mis direcciones</a>
+                        <a href="{{ route('portal.asistente') }}" class="text-sky-700 hover:underline">Asistente</a>
                         <a href="{{ route('portal.tickets') }}" class="text-sky-700 hover:underline">Ayuda</a>
                     @endcan
                     @can('crm')

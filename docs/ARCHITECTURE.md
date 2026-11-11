@@ -191,7 +191,7 @@ Un pedido se considera afectado por una ruptura si estaba en una parada aún no 
 
 ### 4.4 Integración de IA
 
-Una API de modelo de lenguaje con capa gratuita (ADR-0015), llamada por HTTPS desde el servidor. Dos usos:
+Una API de modelo de lenguaje con capa gratuita, llamada por HTTPS desde el servidor: Groq (`openai/gpt-oss-20b`) y Gemini de respaldo, ambos por su endpoint compatible con OpenAI (ADR-0015). Dos usos:
 
 - **Clasificación de tickets**: asíncrona, en el worker de colas.
 - **Asistente del portal**: responde consultas de estado de pedido y de catálogo con datos que el servidor obtiene de la base; si no puede resolver, deriva a un ticket.
