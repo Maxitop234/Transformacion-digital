@@ -43,7 +43,7 @@ Ambos usan el mismo portal, pero cambia el precio, el pago, las validaciones y e
 | RN-10 | **Alcance de la cartera.** El vendedor ve y edita solo sus clientes; el administrador ve a todo el equipo y puede reasignar | Filtro por `cliente.id_vendedor` según el rol, aplicado en el servidor |
 | RN-11 | **Asistente IA.** Responde consultas de estado y catálogo, y clasifica tickets por categoría y prioridad. No se envían RUT ni nombres a la API externa. Si la API no responde, el ticket queda para clasificación manual | `ticket.categoria`, `ticket.prioridad`, `ticket.clasificado_por_ia` |
 
-Otros supuestos configurables: una oportunidad se considera «sin actividad» tras 15 días sin interacciones; la conversión del panel se calcula sobre los últimos 90 días.
+Otros supuestos configurables: una oportunidad se considera «sin actividad» tras 15 días sin interacciones (`OPORTUNIDAD_SIN_ACTIVIDAD_DIAS`); la conversión del panel se calcula sobre los últimos 90 días (`CONVERSION_VENTANA_DIAS`), como oportunidades creadas en la ventana que hoy están ganadas ÷ creadas en la ventana.
 
 ## 4. Ciclo de vida del pedido
 

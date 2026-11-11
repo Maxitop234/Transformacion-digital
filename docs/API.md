@@ -57,7 +57,7 @@ Roles: `V` vendedor, `D` despachador, `A` administrador.
 
 | Método | Ruta | Roles | Descripción | Reglas |
 | --- | --- | --- | --- | --- |
-| GET | `/crm` | V D A | Panel: indicadores, validaciones pendientes, oportunidades sin actividad, alertas de frío de la cartera | RN-10 |
+| GET | `/crm` | V D A | Panel. V y A: indicadores (oportunidades abiertas, conversión y pedidos por canal en `CONVERSION_VENTANA_DIAS`, tickets abiertos), empresas pendientes de validación y oportunidades sin interacciones en `OPORTUNIDAD_SIN_ACTIVIDAD_DIAS`. V, D y A: alertas de frío abiertas con los pedidos y clientes afectados. El vendedor ve solo su cartera; el despachador, ningún bloque comercial | RN-10 |
 | GET | `/crm/clientes` | V A | Cartera (el vendedor ve solo la suya) | RN-10 |
 | GET, POST | `/crm/clientes/nuevo` | V A | Ingresa un prospecto | |
 | GET | `/crm/clientes/{id}` | V A | Ficha: datos, contactos, puntos de entrega, interacciones, pedidos, tickets | |

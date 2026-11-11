@@ -9,7 +9,7 @@ Aplicación Laravel que contiene el portal B2B/B2C, el CRM, el worker de colas y
 | Clientes y accesos | Inicio de sesión, registro, roles | T-006, T-009 |
 | Catálogo e inventario | `/catalogo`, mantenedores | T-007, T-008 |
 | Ventas | Carrito (`app/Domain/Ventas`), checkout, pedidos, pagos simulados | T-010 a T-012 |
-| CRM | `/crm`: panel, clientes, pipeline, pedidos, tickets | T-013 a T-016, T-018 |
+| CRM | `/crm`: panel (`app/Domain/Crm`), clientes, pipeline, pedidos, tickets | T-013 a T-016, T-018 |
 | Logística | Despachos, flota, alertas de frío | T-017 |
 | IA | Clasificación de tickets y asistente | T-021 |
 
@@ -181,6 +181,15 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - Conflictos de negocio (`ConflictoPedido` y subclases) son `HttpException` 409: JSON `{message}` o la vista `errors/409`.
 - `tests/Feature/Portal/PedidoConcurrenciaTest` usa dos conexiones reales a PostgreSQL: confirma sus datos (sin transacción envolvente) y vacía las tablas en `tearDown`.
 
+## Panel del CRM (T-013)
+
+- **Servicio:** `App\Domain\Crm\PanelCrm`; controlador `Crm\InicioController` (`GET /crm`). Todo se filtra con `visiblePara()` (RN-10): vendedor, su cartera; administrador y despachador, todo.
+- **Bloques por rol:** los comerciales (indicadores, empresas pendientes, oportunidades sin actividad) solo con el gate `clientes` (vendedor y administrador); las alertas con `alertas` (los tres). El despachador no ve datos comerciales.
+- **Indicadores:** oportunidades abiertas (etapa sin cierre); conversión = creadas en la ventana que hoy están en etapa ganada ÷ creadas en la ventana; pedidos por canal en la ventana sin los cancelados, con monto neto Σ cantidad × precio pactado; tickets `abierto` o `en_proceso`.
+- **Sin actividad:** la última actividad es la interacción más reciente ligada a la oportunidad o, si la interacción no tiene oportunidad, al mismo cliente; sin interacciones, la fecha de creación.
+- **Alertas:** rupturas de frío no resueltas cruzadas con el despacho del camión que estaba en ruta a la hora de la lectura y sus paradas aún no entregadas, el mismo criterio que la vista `bi_pedido_afectado_alerta` (T-020). El vendedor ve solo las alertas que tocan a sus clientes, y solo esos clientes. Administrador y despachador ven además el total de alertas abiertas de la flota.
+- **Umbrales:** `OPORTUNIDAD_SIN_ACTIVIDAD_DIAS` (15) y `CONVERSION_VENTANA_DIAS` (90) en `config/negocio.php`.
+
 ## Configuración relevante
 
 - `DB_SSLMODE`: `prefer` en local, `require` (o `verify-full`) contra RDS.
@@ -188,7 +197,7 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - La zona horaria de la aplicación y de la sesión de PostgreSQL es `APP_TIMEZONE` (`America/Santiago`). Las columnas `TIMESTAMPTZ` guardan el instante absoluto (UTC), así que no hay ambigüedad al leerlas desde otros componentes.
 - Sesiones, caché, colas y modo mantenimiento usan la base (`database`); ninguno usa `file`.
 - Cookie de sesión `HttpOnly` y `SameSite=lax` (valores de Laravel); `SESSION_SECURE_COOKIE=true` en AWS para que viaje solo por HTTPS.
-- Parámetros de negocio (pedido mínimo, minutos de reserva, horas de abandono del carrito, IVA) en `config/negocio.php`, leídos de `PEDIDO_MINIMO_B2C`, `PEDIDO_MINIMO_B2B`, `RESERVA_STOCK_MINUTOS_B2C`, `CARRITO_ABANDONO_HORAS` e `IVA_PCT`.
+- Parámetros de negocio (pedido mínimo, minutos de reserva, horas de abandono del carrito, umbrales del panel del CRM, IVA) en `config/negocio.php`, leídos de `PEDIDO_MINIMO_B2C`, `PEDIDO_MINIMO_B2B`, `RESERVA_STOCK_MINUTOS_B2C`, `CARRITO_ABANDONO_HORAS`, `OPORTUNIDAD_SIN_ACTIVIDAD_DIAS`, `CONVERSION_VENTANA_DIAS` e `IVA_PCT`.
 
 ## Referencias
 
