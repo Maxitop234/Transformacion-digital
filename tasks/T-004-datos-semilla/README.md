@@ -54,8 +54,8 @@ Leer antes de empezar:
 - **`App\Domain\Clientes\Rut`:** validación y normalización de RUT (módulo 11); la reutilizará T-009 para el registro.
 - **`config/negocio.php`:** pedido mínimo, minutos de reserva, horas de abandono del carrito e IVA desde el `.env`, como pide AGENTS.md. El historial sintético lo usa para cumplir RN-03 y calcular los montos de pago.
 - **Supuestos a confirmar con el equipo:**
-  - Los **precios de lista son netos** (sin IVA) y los pagos de la demo se calculan con IVA (`IVA_PCT`). T-008/T-011 deben confirmar cómo se muestran al cliente B2C.
-  - Rangos de conservación de referencia: Congelado −25 a −18 °C, Refrigerado 0 a 5 °C, Cárnico fresco −1 a 4 °C.
+  - *Confirmado por el equipo (2026-11-10):* los **precios de lista son netos** (sin IVA); el precio bruto es neto + IVA (`IVA_PCT`) y es el que se cobra. Los pagos de la demo se calculan así. T-008/T-011 muestran ambos según corresponda.
+  - *Confirmado (2026-11-10):* rangos de conservación de referencia, Congelado −25 a −18 °C, Refrigerado 0 a 5 °C, Cárnico fresco −1 a 4 °C; basta con que se distingan en la demo.
   - Las listas institucionales cuestan 14 % y 10 % menos que la pública.
 - **Convención de `movimiento_inventario.cantidad`** documentada en `DATA_MODEL.md` (reserva/liberación sobre `stock_reservado`; ingreso/salida/merma/ajuste sobre `stock_disponible`). T-010/T-011 deben seguirla.
 - **Historial:** las fechas son relativas al momento de sembrar (8 semanas hacia atrás). Los pedidos de hoy quedan abiertos (pendientes o confirmados) y la entrega empieza al día hábil siguiente; para ver pedidos en preparación o en ruta durante una demo, conviene volver a sembrar esa mañana. Cada pedido del portal nace de un carrito `convertido`; cada rechazo por temperatura abre un ticket `reclamo`.
