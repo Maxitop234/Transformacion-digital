@@ -55,7 +55,7 @@ composer install
 cp .env.example .env && php artisan key:generate
 ```
 
-Ajusta `DB_HOST`, `DB_PORT`, `DB_USERNAME` y `DB_PASSWORD` en `.env` según tu PostgreSQL local (en Docker Compose, a partir de T-002, el host es `db`). Luego:
+Ajusta `DB_HOST`, `DB_PORT`, `DB_USERNAME` y `DB_PASSWORD` en `.env` según tu PostgreSQL local. Para levantar todo con Docker (base, web, worker, Nginx y Grafana) sigue [`infra/docker/README.md`](../../infra/docker/README.md). Sin Docker:
 
 ```bash
 php artisan migrate

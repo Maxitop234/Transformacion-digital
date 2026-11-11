@@ -43,13 +43,14 @@ La Ley 21.719 de protección de datos personales (Chile) fue publicada el 13 de 
 
 ## 5. Acceso a la base de datos: mínimo privilegio
 
-Tres usuarios, para que una credencial filtrada tenga un daño acotado:
+Tres usuarios sobre el esquema de negocio, más uno para el estado interno de Grafana, para que una credencial filtrada tenga un daño acotado:
 
 | Usuario | Puede | No puede | Lo usa |
 | --- | --- | --- | --- |
 | `app_rw` | Leer y escribir el esquema de negocio | Crear o alterar tablas, administrar roles | Aplicación web y worker |
 | `iot_writer` | Insertar en `telemetria` y `alerta`; lectura mínima del umbral de frío | Leer clientes, pedidos o precios; actualizar o borrar | Contenedores del simulador |
 | `bi_reader` | `SELECT` sobre las vistas `bi_*` | Escribir; leer tablas con datos personales directamente | Grafana |
+| `grafana_rw` | Ser dueño de la base `grafana` (usuarios, dashboards y preferencias de Grafana, ADR-0010) | Conectarse a la base de negocio | Grafana (estado interno) |
 
 El usuario maestro de RDS se usa solo para crear roles y ejecutar migraciones, nunca desde la aplicación en ejecución.
 

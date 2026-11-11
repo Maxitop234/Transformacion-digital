@@ -116,7 +116,7 @@ Ejemplo de instrucción a un agente: *«Implementa la tarea `tasks/T-010-carrito
 
 ## Puesta en marcha
 
-La aplicación Laravel base ya existe ([T-001](tasks/T-001-bootstrap-laravel); comandos en [`apps/web/README.md`](apps/web/README.md)). El entorno local con Docker Compose se construye en [T-002](tasks/T-002-entorno-local-docker). Cuando esté listo, el flujo será:
+Todo el sistema local (PostgreSQL + PostGIS, aplicación, worker, Nginx y Grafana) se levanta con Docker Compose. El paso a paso completo está en [`infra/docker/README.md`](infra/docker/README.md) y los comandos de la aplicación en [`apps/web/README.md`](apps/web/README.md).
 
 ```bash
 cp .env.example .env
@@ -125,6 +125,8 @@ cp .env.example .env
 ```bash
 docker compose -f infra/docker/compose.dev.yml up -d
 ```
+
+Luego abre `http://localhost:8080` (portal), `/crm`, `/health` y `/bi` (Grafana).
 
 ## Estado
 
