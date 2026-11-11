@@ -24,7 +24,7 @@ Leer antes de empezar:
 
 ## Alcance
 
-- Agregar, cambiar cantidad y quitar productos; un solo carrito `abierto` por cliente.
+- Agregar, cambiar cantidad y quitar productos; un solo carrito `activo` por cliente.
 - El carrito no guarda precios: se recalculan con el servicio de precios en cada vista.
 - Si la cantidad supera el disponible, se ajusta y se avisa.
 - Totales con neto, IVA y total.

@@ -27,7 +27,7 @@ Leer antes de empezar:
 - Registro B2C: correo, nombre, contraseña y una dirección; cuenta activa de inmediato con lista «Público general».
 - Registro B2B: RUT, razón social, contacto principal y punto de entrega con ventana de recepción; el cliente queda pendiente de validación.
 - Validación de RUT con dígito verificador y unicidad.
-- Al registrar una empresa se crea una oportunidad «Prospecto nuevo» con origen `web` asignada a un vendedor.
+- Al registrar una empresa se crea una oportunidad «Prospecto nuevo» con origen `portal` asignada a un vendedor.
 - Aceptación explícita del tratamiento de datos personales.
 
 ## Fuera de alcance

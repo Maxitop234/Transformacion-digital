@@ -25,7 +25,7 @@ Leer antes de empezar:
 ## Alcance
 
 - Migraciones para las 34 tablas en orden de dependencias, con PK, FK, `UNIQUE`, `CHECK` y nulidad exactamente como en `DATA_MODEL.md`.
-- Índices: `telemetria (camion_id, fecha_hora DESC)`, FK de uso frecuente y unicidad parcial de un carrito `abierto` por cliente.
+- Índices: `telemetria (camion_id, fecha_hora DESC)`, FK de uso frecuente y unicidad parcial de un carrito `activo` por cliente.
 - Extensión PostGIS habilitada por migración.
 - Un modelo Eloquent por tabla con `$table`, `$primaryKey`, claves compuestas y relaciones declaradas.
 - Resolver los puntos abiertos 1 y 6 de `DATA_MODEL.md` (particionamiento y listas de valores) y dejar el documento actualizado.

@@ -12,7 +12,9 @@ Modelo relacional en Tercera Forma Normal para PostgreSQL 16. **34 tablas** en c
 - Estados como catálogo (`estado_pedido`, `etapa_pipeline`) o lista cerrada con `CHECK`, nunca texto libre.
 - Los campos marcados **[Exigido]** son los parámetros de telemetría que pide el enunciado y no se renombran.
 
-> Las listas de valores marcadas *(propuesto)* se derivan del texto del informe pero no figuran literalmente en él. Confírmalas contra el diccionario de datos (Anexo A) al escribir las migraciones y ajusta este documento.
+> Las listas de valores, las reglas `CHECK` y los valores por defecto se confirmaron contra el diccionario de datos del informe (Anexo A) el 2026-11-10, al escribir las migraciones de T-003. Las dos desviaciones deliberadas respecto del Anexo están señaladas: los nombres de rol y el valor `sin_clasificar` de `ticket.categoria`.
+>
+> Este documento y las migraciones de `apps/web/database/migrations` deben coincidir; el test `EsquemaCoincideConDataModelTest` lo comprueba columna por columna.
 
 ## Resumen por dominio
 
@@ -97,13 +99,13 @@ Nótese que `pedido` no tiene `id_cliente`: el cliente se obtiene por `pedido �
 | --- | --- | --- | --- |
 | `id_comuna` | INT | PK | |
 | `id_region` | INT | FK → `region` | |
-| `nombre` | VARCHAR(80) | | |
+| `nombre` | VARCHAR(80) | | Único dentro de su región: `UNIQUE (id_region, nombre)` |
 
 ### `rol`
 | Columna | Tipo | Clave | Descripción |
 | --- | --- | --- | --- |
 | `id_rol` | INT | PK | |
-| `nombre` | VARCHAR(30) | UK | `administrador`, `vendedor`, `despachador`, `cliente_b2b`, `cliente_b2c` |
+| `nombre` | VARCHAR(30) | UK | `administrador`, `vendedor`, `despachador`, `cliente_b2b`, `cliente_b2c`. *Desviación del Anexo A* (que lista `admin`, `vendedor`, `cliente`, `bodega`, `despachador`): se mantienen estos cinco porque la matriz de permisos de `BUSINESS_RULES.md` se construyó sobre ellos y el Anexo no define reglas para «bodega» |
 | `descripcion` | VARCHAR(150)? | | |
 
 ### `usuario`
@@ -154,7 +156,7 @@ Existe un usuario técnico `sistema` (sin acceso interactivo) para registrar cam
 | `id_vendedor` | INT? | FK → `vendedor` | Ejecutivo asignado; define el alcance de cartera (RN-10) |
 | `rut` | VARCHAR(12)? | UK | Validado con dígito verificador; obligatorio para B2B |
 | `nombre_razon_social` | VARCHAR(150) | | |
-| `estado_cliente` | VARCHAR(25) | | `prospecto`, `pendiente_validacion`, `activo`, `inactivo` *(propuesto)* |
+| `estado_cliente` | VARCHAR(25) | | `prospecto`, `pendiente_validacion`, `activo`, `inactivo`. B2B queda en `pendiente_validacion` hasta su aprobación comercial |
 | `fecha_registro` | TIMESTAMPTZ | | |
 | `fecha_validacion` | TIMESTAMPTZ? | | Se llena al validar una empresa (RN-02) |
 
@@ -167,7 +169,7 @@ Existe un usuario técnico `sistema` (sin acceso interactivo) para registrar cam
 | `cargo` | VARCHAR(80)? | | |
 | `email` | VARCHAR(120) | | |
 | `telefono` | VARCHAR(20)? | | |
-| `es_principal` | BOOLEAN | | A lo más un contacto principal por cliente |
+| `es_principal` | BOOLEAN | | A lo más un contacto principal por cliente (índice único parcial) |
 
 ### `direccion_despacho`
 | Columna | Tipo | Clave | Descripción |
@@ -212,7 +214,7 @@ Existe un usuario técnico `sistema` (sin acceso interactivo) para registrar cam
 | `sku` | VARCHAR(30) | UK | |
 | `nombre` | VARCHAR(120) | | |
 | `descripcion` | TEXT? | | |
-| `unidad_medida` | VARCHAR(10) | | Ej.: `kg`, `caja`, `un` |
+| `unidad_medida` | VARCHAR(10) | | `kg`, `un`, `caja` |
 | `activo` | BOOLEAN | | |
 
 ### `detalle_lista_precio`
@@ -220,7 +222,7 @@ Existe un usuario técnico `sistema` (sin acceso interactivo) para registrar cam
 | --- | --- | --- | --- |
 | `id_lista_precio` | INT | PK, FK → `lista_precio` | |
 | `id_producto` | INT | PK, FK → `producto` | |
-| `precio_unitario` | NUMERIC(12,2) | | `CHECK > 0` |
+| `precio_unitario` | NUMERIC(12,2) | | En CLP; `CHECK >= 0` |
 
 ### `inventario`
 | Columna | Tipo | Clave | Descripción |
@@ -239,8 +241,8 @@ Existe un usuario técnico `sistema` (sin acceso interactivo) para registrar cam
 | `id_producto` | INT | FK → `producto` | |
 | `id_pedido` | INT? | FK → `pedido` | Nulo en ingresos y ajustes |
 | `id_usuario` | INT | FK → `usuario` | Responsable (o `sistema`) |
-| `tipo` | VARCHAR(15) | | `ingreso`, `reserva`, `liberacion`, `salida`, `ajuste` *(propuesto)* |
-| `cantidad` | NUMERIC(12,2) | | `CHECK > 0`; el sentido lo da `tipo` |
+| `tipo` | VARCHAR(15) | | `ingreso`, `reserva`, `liberacion`, `salida`, `ajuste`, `merma` |
+| `cantidad` | NUMERIC(12,2) | | Positiva o negativa según el tipo (un `ajuste` puede restar); `CHECK <> 0` |
 | `fecha_hora` | TIMESTAMPTZ | | |
 
 Bitácora de solo inserción.
@@ -254,7 +256,7 @@ Bitácora de solo inserción.
 | --- | --- | --- | --- |
 | `id_carrito` | INT | PK | |
 | `id_cliente` | INT | FK → `cliente` | |
-| `estado` | VARCHAR(15) | | `abierto`, `convertido`, `abandonado` *(propuesto)*. Un solo carrito `abierto` por cliente |
+| `estado` | VARCHAR(15) | | `activo`, `convertido`, `abandonado`. Un solo carrito `activo` por cliente (índice único parcial); `convertido` = ya generó un pedido |
 | `creado_en` | TIMESTAMPTZ | | |
 | `actualizado_en` | TIMESTAMPTZ | | Sin actividad por 24 h → `abandonado` |
 
@@ -286,7 +288,7 @@ Valores: `Pendiente` (1), `Confirmado` (2), `En preparación` (3), `En ruta` (4)
 | `id_carrito` | INT? | FK, UK → `carrito` | Nulo si no nació de un carrito |
 | `id_oportunidad` | INT? | FK → `oportunidad` | Nulo en compras B2C y recompras |
 | `id_vendedor_registra` | INT? | FK → `vendedor` | Quién lo ingresó si fue por CRM o teléfono (RN-08) |
-| `canal` | VARCHAR(10) | | `web`, `telefono`, `crm` |
+| `canal` | VARCHAR(10) | | `portal`, `crm` (RN-08: un pedido telefónico lo ingresa el vendedor en el CRM) |
 | `fecha_pedido` | TIMESTAMPTZ | | |
 | `fecha_entrega_solicitada` | DATE? | | Desde el siguiente día hábil (RN-06) |
 | `observaciones` | VARCHAR(300)? | | |
@@ -299,7 +301,7 @@ No hay columna de total: se calcula desde `detalle_pedido`.
 | `id_pedido` | INT | PK, FK → `pedido` | |
 | `id_producto` | INT | PK, FK → `producto` | |
 | `cantidad` | NUMERIC(12,2) | | `CHECK > 0` |
-| `precio_unitario_pactado` | NUMERIC(12,2) | | Copia deliberada del precio al comprar (RN-01): si la lista cambia, el pedido no |
+| `precio_unitario_pactado` | NUMERIC(12,2) | | Copia deliberada del precio al comprar (RN-01): si la lista cambia, el pedido no. `CHECK >= 0` |
 
 ### `historial_estado_pedido`
 | Columna | Tipo | Clave | Descripción |
@@ -317,8 +319,8 @@ No hay columna de total: se calcula desde `detalle_pedido`.
 | `id_pago` | INT | PK | |
 | `id_pedido` | INT | FK → `pedido` | |
 | `monto` | NUMERIC(12,2) | | `CHECK > 0` |
-| `metodo` | VARCHAR(15) | | `en_linea`, `orden_compra` *(propuesto)* |
-| `estado` | VARCHAR(15) | | `pendiente`, `aprobado`, `rechazado` *(propuesto)* |
+| `metodo` | VARCHAR(15) | | `tarjeta`, `transferencia`, `credito_30d`, `efectivo`. B2C paga con `tarjeta` o `transferencia`; `credito_30d` (orden de compra) solo B2B (RN-05) |
+| `estado` | VARCHAR(15) | | `pendiente`, `aprobado`, `rechazado`, `reembolsado` |
 | `referencia_externa` | VARCHAR(80)? | | N.º de transacción simulada o de orden de compra |
 | `fecha_hora` | TIMESTAMPTZ | | |
 
@@ -345,7 +347,7 @@ Valores: `Prospecto nuevo` (1), `Contactado` (2), `Calificado` (3), `Propuesta` 
 | `id_vendedor` | INT | FK → `vendedor` | |
 | `id_etapa` | INT | FK → `etapa_pipeline` | Etapa actual |
 | `titulo` | VARCHAR(150) | | |
-| `origen` | VARCHAR(15) | | `web`, `vendedor` *(propuesto)* |
+| `origen` | VARCHAR(15) | | `portal`, `vendedor`, `telefono`, `referido` |
 | `monto_estimado` | NUMERIC(14,2)? | | Requerido para pasar a «Calificado» |
 | `fecha_creacion` | TIMESTAMPTZ | | |
 | `fecha_cierre_estimada` | DATE? | | |
@@ -369,7 +371,7 @@ Valores: `Prospecto nuevo` (1), `Contactado` (2), `Calificado` (3), `Propuesta` 
 | `id_cliente` | INT | FK → `cliente` | |
 | `id_vendedor` | INT | FK → `vendedor` | |
 | `id_oportunidad` | INT? | FK → `oportunidad` | Opcional |
-| `tipo` | VARCHAR(15) | | `llamada`, `visita`, `correo`, `reunion`, `nota` *(propuesto)* |
+| `tipo` | VARCHAR(15) | | `llamada`, `correo`, `reunion`, `visita`, `mensaje` |
 | `resumen` | TEXT | | |
 | `fecha_hora` | TIMESTAMPTZ | | |
 
@@ -382,9 +384,9 @@ Valores: `Prospecto nuevo` (1), `Contactado` (2), `Calificado` (3), `Propuesta` 
 | `id_vendedor` | INT? | FK → `vendedor` | Quién lo atiende |
 | `asunto` | VARCHAR(150) | | |
 | `descripcion` | TEXT | | |
-| `categoria` | VARCHAR(15) | | `sin_clasificar`, `consulta`, `reclamo`, `despacho`, `calidad`, `facturacion` *(propuesto)* |
-| `prioridad` | VARCHAR(10) | | `baja`, `media`, `alta` *(propuesto)* |
-| `estado` | VARCHAR(15) | | `abierto`, `en_proceso`, `resuelto`, `cerrado` *(propuesto)* |
+| `categoria` | VARCHAR(15) | | `sin_clasificar`, `consulta`, `reclamo`, `cambio_pedido`, `cotizacion`, `otro`. *Desviación del Anexo A:* se agrega `sin_clasificar` (valor por defecto) para distinguir un ticket pendiente de clasificar de una consulta real (T-018, T-021) |
+| `prioridad` | VARCHAR(10) | | `baja`, `media`, `alta` |
+| `estado` | VARCHAR(15) | | `abierto`, `en_proceso`, `resuelto`, `cerrado` |
 | `clasificado_por_ia` | BOOLEAN | | Falso si se clasificó a mano (RN-11) |
 | `creado_en` | TIMESTAMPTZ | | |
 | `cerrado_en` | TIMESTAMPTZ? | | |
@@ -416,7 +418,7 @@ Valores: `Prospecto nuevo` (1), `Contactado` (2), `Calificado` (3), `Propuesta` 
 | `id_despacho` | INT | PK | |
 | `camion_id` | VARCHAR(20) | FK → `camion` | |
 | `id_conductor` | INT | FK → `conductor` | |
-| `estado` | VARCHAR(15) | | `programado`, `en_ruta`, `finalizado`, `cancelado` *(propuesto)* |
+| `estado` | VARCHAR(15) | | `programado`, `en_ruta`, `finalizado`, `cancelado` |
 | `fecha_programada` | DATE | | |
 | `salida_real` | TIMESTAMPTZ? | | Al salir de bodega; lleva los pedidos a «En ruta» |
 | `llegada_real` | TIMESTAMPTZ? | | |
@@ -426,8 +428,8 @@ Valores: `Prospecto nuevo` (1), `Contactado` (2), `Calificado` (3), `Propuesta` 
 | --- | --- | --- | --- |
 | `id_despacho` | INT | PK, FK → `despacho` | |
 | `id_pedido` | INT | PK, FK → `pedido` | |
-| `orden_parada` | SMALLINT | | Secuencia de la ruta |
-| `estado_entrega` | VARCHAR(25) | | `pendiente`, `entregado`, `rechazado`, `fallido` *(propuesto)* |
+| `orden_parada` | SMALLINT | | Secuencia de la ruta; `CHECK > 0` |
+| `estado_entrega` | VARCHAR(25) | | `pendiente`, `entregado`, `fallido`, `rechazado_temperatura` |
 | `fecha_entrega` | TIMESTAMPTZ? | | |
 | `motivo_falla` | VARCHAR(200)? | | Obligatorio si fue rechazado o fallido |
 
@@ -439,13 +441,13 @@ Un pedido puede aparecer en más de un despacho (reprogramación tras una entreg
 | `id_telemetria` | BIGINT | PK | |
 | `camion_id` | VARCHAR(20) | FK → `camion` | **[Exigido]** |
 | `fecha_hora` | TIMESTAMPTZ | | Momento de la lectura |
-| `temp_camara` | REAL | | **[Exigido]** °C en la cámara de frío |
+| `temp_camara` | REAL | | **[Exigido]** °C en la cámara de frío; `CHECK` entre -60 y 60 |
 | `lat` | DOUBLE PRECISION | | **[Exigido]** `CHECK` entre -90 y 90 |
 | `long` | DOUBLE PRECISION | | **[Exigido]** `CHECK` entre -180 y 180 |
 | `combustible_pct` | SMALLINT | | **[Exigido]** `CHECK` entre 0 y 100 |
 | `alerta_ruptura_frio` | BOOLEAN | | **[Exigido]** Verdadero si excede el rango crítico |
 
-Índice `(camion_id, fecha_hora DESC)`. `long` es palabra reservada en algunos contextos: citar como `"long"` en SQL crudo si hiciera falta.
+Índice `(camion_id, fecha_hora DESC)`. Sin particionar ([ADR-0017](ADR/0017-telemetria-sin-particionar.md)). `long` es palabra reservada en algunos contextos: citar como `"long"` en SQL crudo si hiciera falta.
 
 ### `alerta`
 | Columna | Tipo | Clave | Descripción |
@@ -453,9 +455,9 @@ Un pedido puede aparecer en más de un despacho (reprogramación tras una entreg
 | `id_alerta` | BIGINT | PK | |
 | `id_telemetria` | BIGINT | FK → `telemetria` | Lectura que la originó |
 | `id_usuario_resuelve` | INT? | FK → `usuario` | Despachador que la cerró |
-| `tipo` | VARCHAR(20) | | `ruptura_frio`, `combustible_bajo` *(propuesto)* |
-| `severidad` | VARCHAR(10) | | `media`, `alta`, `critica` *(propuesto)* |
-| `estado` | VARCHAR(15) | | `abierta`, `en_gestion`, `resuelta` *(propuesto)* |
+| `tipo` | VARCHAR(20) | | `ruptura_frio`, `combustible_bajo` |
+| `severidad` | VARCHAR(10) | | `media`, `alta`, `critica` |
+| `estado` | VARCHAR(15) | | `abierta`, `reconocida`, `resuelta` |
 | `accion_correctiva` | VARCHAR(300)? | | Obligatoria al resolver |
 | `fecha_resolucion` | TIMESTAMPTZ? | | |
 
@@ -463,9 +465,25 @@ Los pedidos afectados por una alerta se derivan: `alerta → telemetria → cami
 
 ---
 
+## Reglas comunes y valores por defecto
+
+- Todas las PK numéricas son `GENERATED ALWAYS AS IDENTITY`: la base asigna el número y rechaza un valor explícito (los seeders no fijan IDs).
+- Las claves foráneas usan `ON DELETE RESTRICT`: nada se borra en cascada, porque los historiales y los pedidos deben conservarse. Las líneas dependientes (`item_carrito`, `detalle_pedido`, `detalle_lista_precio`, `despacho_pedido`) tampoco se borran solas.
+- Las listas de valores son `CHECK (columna IN (...))` y aparecen en la columna «Descripción» de cada tabla.
+- Valores por defecto (Anexo A):
+
+| Valor | Columnas |
+| --- | --- |
+| `now()` | `usuario.creado_en`, `cliente.fecha_registro`, `inventario.actualizado_en`, `movimiento_inventario.fecha_hora`, `carrito.creado_en`, `carrito.actualizado_en`, `pedido.fecha_pedido`, `historial_estado_pedido.fecha_hora`, `pago.fecha_hora`, `oportunidad.fecha_creacion`, `historial_etapa.fecha_hora`, `interaccion.fecha_hora`, `ticket.creado_en`, `telemetria.fecha_hora` |
+| `CURRENT_DATE` | `lista_precio.vigente_desde` |
+| `TRUE` | `usuario.activo`, `lista_precio.activa`, `vendedor.activo`, `direccion_despacho.activa`, `producto.activo`, `camion.activo`, `conductor.activo` |
+| `FALSE` | `contacto_cliente.es_principal`, `estado_pedido.es_final`, `etapa_pipeline.es_cierre`, `etapa_pipeline.es_ganada`, `ticket.clasificado_por_ia`, `telemetria.alerta_ruptura_frio` |
+| `0` | `inventario.stock_disponible`, `inventario.stock_reservado` |
+| Texto | `cliente.estado_cliente` = `prospecto`, `carrito.estado` = `activo`, `pago.estado` = `pendiente`, `ticket.categoria` = `sin_clasificar`, `ticket.prioridad` = `media`, `ticket.estado` = `abierto`, `despacho.estado` = `programado`, `despacho_pedido.estado_entrega` = `pendiente`, `alerta.estado` = `abierta` |
+
 ## Tablas del framework
 
-Además de las 34 tablas de negocio, Laravel crea sus propias tablas de soporte (`sessions`, `cache`, `jobs`, `failed_jobs`, `migrations`). Conservan su nombre en inglés y no forman parte del MER. Grafana usa un esquema o base aparte dentro de la misma instancia.
+Además de las 34 tablas de negocio, Laravel crea sus propias tablas de soporte (`sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`). Conservan su nombre en inglés y no forman parte del MER. Las tablas `users` y `password_reset_tokens` del esqueleto de Laravel se eliminaron: la autenticación usa `usuario` (T-006). PostGIS agrega `spatial_ref_sys`. Grafana usa una base aparte (`grafana`) dentro de la misma instancia.
 
 ## Roles de base de datos
 
@@ -482,9 +500,9 @@ Se crean con [`db/roles.sql`](../db) usando el usuario maestro. Las migraciones 
 
 Decisiones del modelo que hay que cerrar al implementar. Regístralas en un ADR cuando se resuelvan.
 
-1. **Particionamiento de `telemetria` frente a la FK de `alerta`.** PostgreSQL exige que la PK de una tabla particionada incluya la columna de partición, lo que rompe la FK simple `alerta.id_telemetria`. Recomendación para el prototipo: no particionar y usar el índice `(camion_id, fecha_hora)`; con ~17 MB diarios no hace falta. Dejarlo documentado como evolución.
+1. ~~**Particionamiento de `telemetria` frente a la FK de `alerta`.**~~ *Resuelto (2026-11-10):* no se particiona; índice `(camion_id, fecha_hora DESC)`. Ver [ADR-0017](ADR/0017-telemetria-sin-particionar.md).
 2. **Quién calcula el umbral de frío.** RN-07 dice que el umbral del viaje es el rango más exigente de la carga, pero `iot_writer` solo inserta. Recomendación: exponerle una vista de solo lectura `iot_umbral_camion (camion_id, temp_min_c, temp_max_c)` con el rango del despacho en ruta y un valor por defecto si el camión no tiene despacho.
 3. **Varias lecturas fuera de rango seguidas.** Para no crear una alerta cada 30 s, el simulador crea una alerta al iniciar el episodio y no repite mientras haya una alerta abierta de ese camión.
 4. **Coordenadas y PostGIS.** El MER guarda `lat`/`long` como columnas numéricas (exigidas por el enunciado). PostGIS queda disponible para consultas espaciales o columnas generadas, sin reemplazar esas columnas.
 5. **Conservación de la telemetría.** Al ser potencialmente dato personal (posición de un conductor identificable), definir un plazo de retención (propuesta: 90 días de detalle) y un trabajo de purga.
-6. **Listas de valores *(propuesto)*.** Confirmar contra el Anexo A del informe.
+6. ~~**Listas de valores.**~~ *Resuelto (2026-11-10):* confirmadas contra el Anexo A; ver la nota de convenciones y las dos desviaciones señaladas en `rol` y `ticket`.

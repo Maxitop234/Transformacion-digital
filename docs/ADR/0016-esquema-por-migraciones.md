@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | Propuesta |
+| Estado | Aceptada (2026-11-10, confirmada por el equipo al iniciar T-003) |
 | Fecha | 2026-11-11 |
 | Drivers | D2 (ver [`ARCHITECTURE.md`](../ARCHITECTURE.md#1-requisitos-que-guían-la-arquitectura)) |
 

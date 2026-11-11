@@ -94,7 +94,7 @@ Cualquier otra transición es inválida y debe rechazarse. Toda transición escr
 
 Una oportunidad es la relación comercial; un pedido es una compra concreta. Una oportunidad ganada puede generar varios pedidos, y muchos pedidos no pasan por una oportunidad.
 
-- **Registro web de una empresa:** crea el cliente en estado pendiente y una oportunidad «Prospecto nuevo» con origen `web`, asignada a un vendedor. Ningún prospecto digital queda sin seguimiento.
+- **Registro web de una empresa:** crea el cliente en estado pendiente y una oportunidad «Prospecto nuevo» con origen `portal`, asignada a un vendedor. Ningún prospecto digital queda sin seguimiento.
 - **Pedido B2C:** no crea oportunidad (`pedido.id_oportunidad` nulo). Igual cuenta en ventas por canal.
 - **Pedido B2B con oportunidad en «Propuesta» o «Negociación»:** el sistema vincula el pedido y mueve la oportunidad a «Ganado», registrando el cambio con el usuario `sistema`. El vendedor puede deshacer el vínculo.
 - **Recompra B2B sin oportunidad abierta:** venta recurrente; no crea oportunidad, para no inflar la conversión.
