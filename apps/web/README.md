@@ -205,6 +205,13 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **`ConfirmarOrdenCompra`** (RN-05): con el pedido bloqueado, confirma por `TransicionesPedido` (rol y cartera), pasa el pago `credito_30d` a `aprobado` y llama a `App\Domain\Crm\GanarOportunidadConPedido` (BUSINESS_RULES.md §6: vincula y gana la oportunidad en «Propuesta» o «Negociación», con el usuario `sistema` en `historial_etapa`).
 - **Stock por estado:** Cancelado libera la reserva; Entregado libera y descuenta (`salida`); Rechazado libera y da de baja (`merma`), en `ReservasStock::despachar()`.
 
+## Logística y alertas (T-017)
+
+- **Dominio** `app/Domain/Logistica`: `ArmarDespacho` (RN-07: un solo rango de conservación por despacho; pedidos «Confirmado» sin parada pendiente; camión y conductor libres), `RegistrarSalida`, `RegistrarResultadoParada` (entregado → salida de stock; rechazado → merma y ticket de reclamo; fallido → vuelve a «Confirmado»; cierra el despacho sin paradas pendientes), `ResolverAlerta` (acción correctiva obligatoria) y `AfectadosPorAlerta` (cruce alerta → lectura → despacho en ruta a esa hora → paradas → clientes; lo usan el panel, las alertas y los avisos).
+- Todos los cambios de estado del pedido pasan por `TransicionesPedido`, con el comentario «Asignado al despacho N», «Salida del camión X» o el motivo de la parada.
+- **Avisos:** `php artisan alertas:notificar` (cada minuto, `onOneServer`) envía por correo (`AlertaFrioNueva`, `MAIL_MAILER`; en local al log) cada ruptura de frío nueva a los despachadores activos y a los vendedores de los clientes afectados. La marca de la última alerta avisada vive en la caché de la base (`alertas.ultima_notificada`); la primera pasada solo la fija.
+- **Controladores:** `Crm\DespachoController` y `Crm\FlotaController` (gates `despachos` y `flota`: despachador y administrador) y `Crm\AlertaController` (gate `alertas`; resolver solo con `despachos`).
+
 ## Configuración relevante
 
 - `DB_SSLMODE`: `prefer` en local, `require` (o `verify-full`) contra RDS.

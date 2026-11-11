@@ -58,13 +58,25 @@ Route::prefix('crm')->name('crm.')->middleware(['auth', 'rol:administrador,vende
         Route::post('/pedidos/{pedido}/confirmar-oc', [Crm\PedidoController::class, 'confirmarOc'])->whereNumber('pedido')->name('pedidos.confirmar-oc');
     });
 
+    // Logística (T-017): despachos y flota para despachador y administrador;
+    // alertas también para el vendedor (las de su cartera).
+    Route::middleware('can:despachos')->group(function () {
+        Route::get('/despachos', [Crm\DespachoController::class, 'index'])->name('despachos');
+        Route::post('/despachos', [Crm\DespachoController::class, 'store'])->name('despachos.store');
+        Route::get('/despachos/{despacho}', [Crm\DespachoController::class, 'show'])->whereNumber('despacho')->name('despachos.show');
+        Route::post('/despachos/{despacho}/salida', [Crm\DespachoController::class, 'salida'])->whereNumber('despacho')->name('despachos.salida');
+        Route::post('/despachos/{despacho}/paradas/{pedido}', [Crm\DespachoController::class, 'parada'])->whereNumber(['despacho', 'pedido'])->name('despachos.parada');
+    });
+    Route::get('/flota', Crm\FlotaController::class)->middleware('can:flota')->name('flota');
+    Route::middleware('can:alertas')->group(function () {
+        Route::get('/alertas', [Crm\AlertaController::class, 'index'])->name('alertas');
+        Route::post('/alertas/{alerta}/resolver', [Crm\AlertaController::class, 'resolver'])->whereNumber('alerta')->name('alertas.resolver');
+    });
+
     // Secciones del menú que se construyen en tareas posteriores: ya tienen su
     // ruta y su control de acceso, para que el menú por rol sea real.
     foreach ([
         'oportunidades' => ['oportunidades', 'Pipeline de oportunidades', 'T-015'],
-        'despachos' => ['despachos', 'Despachos', 'T-017'],
-        'flota' => ['flota', 'Flota', 'T-017'],
-        'alertas' => ['alertas', 'Alertas de frío', 'T-017'],
         'tickets' => ['tickets', 'Tickets', 'T-018'],
     ] as $ruta => [$area, $titulo, $tarea]) {
         Route::view("/{$ruta}", 'crm.seccion-pendiente', ['titulo' => $titulo, 'tarea' => $tarea])

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Crm;
 
+use App\Domain\Logistica\AfectadosPorAlerta;
 use App\Models\Alerta;
 use App\Models\Cliente;
 use App\Models\EstadoPedido;
@@ -12,7 +13,6 @@ use App\Models\Usuario;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -161,29 +161,7 @@ final class PanelCrm
      */
     public function alertasAbiertas(Usuario $usuario): Collection
     {
-        $clientesVisibles = Cliente::visiblePara($usuario)->select('cliente.id_cliente');
-
-        $afectados = DB::table('alerta')
-            ->join('telemetria as t', 't.id_telemetria', '=', 'alerta.id_telemetria')
-            ->join('despacho as d', function (JoinClause $j) {
-                $j->on('d.camion_id', '=', 't.camion_id')
-                    ->whereIn('d.estado', ['en_ruta', 'finalizado'])
-                    ->whereRaw("coalesce(d.salida_real, '-infinity') <= t.fecha_hora")
-                    ->whereRaw('(d.llegada_real IS NULL OR d.llegada_real >= t.fecha_hora)');
-            })
-            ->join('despacho_pedido as dp', function (JoinClause $j) {
-                $j->on('dp.id_despacho', '=', 'd.id_despacho')
-                    ->whereRaw('(dp.fecha_entrega IS NULL OR dp.fecha_entrega >= t.fecha_hora)');
-            })
-            ->join('pedido as p', 'p.id_pedido', '=', 'dp.id_pedido')
-            ->join('direccion_despacho as dir', 'dir.id_direccion', '=', 'p.id_direccion')
-            ->join('cliente as c', 'c.id_cliente', '=', 'dir.id_cliente')
-            ->where('alerta.tipo', 'ruptura_frio')
-            ->where('alerta.estado', '<>', 'resuelta')
-            ->whereIn('c.id_cliente', $clientesVisibles)
-            ->orderBy('dp.orden_parada')
-            ->get(['alerta.id_alerta', 'd.id_despacho', 'dp.orden_parada', 'dp.estado_entrega', 'p.id_pedido', 'c.id_cliente', 'c.nombre_razon_social'])
-            ->groupBy('id_alerta');
+        $afectados = app(AfectadosPorAlerta::class)->porAlerta($usuario, soloAbiertas: true);
 
         if ($afectados->isEmpty()) {
             return collect();

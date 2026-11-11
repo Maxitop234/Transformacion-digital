@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Logistica\NotificarAlertasNuevas;
 use App\Domain\Ventas\CancelarPedidosSinPago;
 use App\Domain\Ventas\MarcarCarritosAbandonados;
 use Illuminate\Foundation\Inspiring;
@@ -20,6 +21,12 @@ Artisan::command('pedidos:cancelar-sin-pago', function (CancelarPedidosSinPago $
     $this->info('Pedidos B2C cancelados por falta de pago: '.$cancelar());
 })->purpose('Cancela los pedidos B2C sin pago y libera su reserva');
 
+// T-017: aviso de rupturas de frío nuevas al despachador y a los vendedores afectados.
+Artisan::command('alertas:notificar', function (NotificarAlertasNuevas $notificar) {
+    $this->info('Alertas de frío avisadas: '.$notificar());
+})->purpose('Avisa las alertas de frío nuevas al despachador y a los vendedores afectados');
+
 // Hay dos instancias web: el lock en la caché de la base deja correr una sola.
 Schedule::command('carritos:marcar-abandonados')->everyFifteenMinutes()->onOneServer()->withoutOverlapping();
 Schedule::command('pedidos:cancelar-sin-pago')->everyMinute()->onOneServer()->withoutOverlapping();
+Schedule::command('alertas:notificar')->everyMinute()->onOneServer()->withoutOverlapping();

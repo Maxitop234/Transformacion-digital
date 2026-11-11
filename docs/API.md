@@ -74,13 +74,14 @@ Roles: `V` vendedor, `D` despachador, `A` administrador.
 | GET | `/crm/pedidos/{id}` | V D A | Detalle: productos con precio pactado, historial con responsable y comentario, pago, despacho y tickets; ofrece solo las transiciones válidas para el rol | RN-09 |
 | POST | `/crm/pedidos/{id}/estado` | V D A | Aplica una transición válida para el rol `{estado, comentario}`. Cancelar, rechazar y reprogramar exigen comentario (422). Rol no permitido: 403; transición inexistente: 409. «Pendiente → Confirmado» no va por aquí (pago en línea o `confirmar-oc`) | RN-09 |
 | POST | `/crm/pedidos/{id}/confirmar-oc` | V A | `{comentario?}`. Valida la orden de compra B2B: pago `credito_30d` → `aprobado`, pedido → «Confirmado» y, si el cliente tenía una oportunidad en «Propuesta» o «Negociación», la gana con este pedido. Sin OC pendiente: 409 | RN-05 |
-| GET | `/crm/despachos` | D A | Despachos por fecha y estado | |
-| POST | `/crm/despachos` | D A | Crea un despacho con camión, conductor y pedidos del mismo rango de frío | RN-07 |
-| POST | `/crm/despachos/{id}/salida` | D A | Registra la salida; los pedidos pasan a «En ruta» | |
-| POST | `/crm/despachos/{id}/paradas/{pedido}` | D A | Resultado de la parada: entregado, rechazado o fallido | |
-| GET | `/crm/flota` | D A | Última lectura de cada camión | |
-| GET | `/crm/alertas` | V D A | Alertas de frío (el vendedor ve las de su cartera) | RN-07 |
-| POST | `/crm/alertas/{id}/resolver` | D A | Registra la acción correctiva y cierra la alerta | |
+| GET | `/crm/despachos` | D A | Despachos por `fecha` y `estado`, con el formulario de armado y los pedidos «Confirmado» sin parada pendiente (con su rango de frío) | |
+| GET | `/crm/despachos/{id}` | D A | Paradas en orden, estado de cada una y acciones (salida, resultado) | |
+| POST | `/crm/despachos` | D A | `{camion_id, id_conductor, fecha_programada, pedidos[], orden[id_pedido]}`. Pedidos «Confirmado» sin otra parada pendiente, todos del mismo rango de conservación (si no, 422); camión y conductor sin otro despacho programado o en ruta. Los pedidos pasan a «En preparación» | RN-07 |
+| POST | `/crm/despachos/{id}/salida` | D A | Registra la salida (`salida_real`); el despacho y sus pedidos pasan a «En ruta». Si no está programado: 409 | |
+| POST | `/crm/despachos/{id}/paradas/{pedido}` | D A | `{resultado: entregado\|rechazado\|fallido, motivo}`. Entregado: pedido «Entregado» y salida de inventario. Rechazado: «Rechazado», merma y ticket de reclamo de prioridad alta. Fallido: vuelve a «Confirmado» para otro despacho. Rechazado y fallido exigen motivo. Sin paradas pendientes, el despacho queda `finalizado` | RN-07, RN-09 |
+| GET | `/crm/flota` | D A | Última lectura de cada camión, su despacho en ruta y si tiene una ruptura de frío abierta | |
+| GET | `/crm/alertas` | V D A | Alertas (`estado`: `abiertas`, `resueltas`, `todas`) con pedidos y clientes afectados. El vendedor ve solo las que tocan su cartera y solo esos clientes | RN-07, RN-10 |
+| POST | `/crm/alertas/{id}/resolver` | D A | `{accion_correctiva}` obligatoria (mínimo 10 caracteres); registra quién y cuándo. Ya resuelta: 409 | |
 | GET | `/crm/tickets` | V A | Tickets con categoría y prioridad | RN-11 |
 | PATCH | `/crm/tickets/{id}` | V A | Reclasifica, asigna o cierra | RN-11 |
 | GET | `/crm/admin` | A | Índice de los mantenedores | |
