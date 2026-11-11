@@ -56,7 +56,8 @@ Leer antes de empezar:
 - **Verificación (2026-11-11)** en un proyecto Docker aislado (`docker compose -p cofrial-t020`, puertos 8091/5442) con base nueva, semilla de demo y las cinco réplicas IoT:
   - `pruebas_permisos.sh`: 167 comprobaciones correctas, con `aplicar.sh` corrido tres veces seguidas (idempotente).
   - Las 15 consultas del dashboard responden por `/bi/api/ds/query`.
-  - Pedido nuevo con canal `portal` (insertado como `app_rw`, porque el checkout es T-011): «Ventas netas hoy / Pedidos hoy» pasó de `$0 | 0` a `$125K | 1` en el navegador sin recargar.
+  - Pedido nuevo con canal `portal` insertado como `app_rw` (antes de integrar T-011): «Ventas netas hoy / Pedidos hoy» pasó de `$0 | 0` a `$125K | 1` en el navegador sin recargar.
+  - **Re-verificado con el checkout real (T-011, `main` en 6d281c7):** una clienta B2C de la semilla confirmó en `/checkout` el pedido N.º 175 (neto $26.160, queda `Pendiente` de pago). Con el dashboard abierto y sin recargar la pestaña, «Ventas netas hoy / Pedidos hoy» pasó de `$125K | 1` a `$151K | 2` en el siguiente refresco (menos de 30 s).
   - Despacho en ruta de CAM-011 con ese pedido + `docker kill -s USR1 cofrial-t020-iot-2-1`: la alerta apareció en «Alertas abiertas» y el pedido y su cliente en «Pedidos y clientes afectados», sin recargar.
   - Desde Grafana como `bi_reader`: `INSERT`, `DELETE` y `CREATE TABLE` fallan con 25006 (solo lectura); con `SET TRANSACTION READ WRITE`, `UPDATE alerta` falla con 42501; `SELECT rut FROM cliente` falla con 42501.
   - Grafana desde cero (contenedor eliminado y base `grafana` borrada y recreada por `aplicar.sh`): arrancó, migró su esquema, cargó datasource (health OK) y dashboard provisionado sin pasos manuales.
