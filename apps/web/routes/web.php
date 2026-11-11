@@ -50,11 +50,18 @@ Route::prefix('crm')->name('crm.')->middleware(['auth', 'rol:administrador,vende
         Route::post('/clientes/{cliente}/pedidos', [Crm\PedidoTelefonicoController::class, 'store'])->whereNumber('cliente')->name('clientes.pedidos.store');
     });
 
+    // Pedidos (T-016): vendedor (su cartera), despachador y administrador.
+    Route::middleware('can:pedidos')->group(function () {
+        Route::get('/pedidos', [Crm\PedidoController::class, 'index'])->name('pedidos');
+        Route::get('/pedidos/{pedido}', [Crm\PedidoController::class, 'show'])->whereNumber('pedido')->name('pedidos.show');
+        Route::post('/pedidos/{pedido}/estado', [Crm\PedidoController::class, 'estado'])->whereNumber('pedido')->name('pedidos.estado');
+        Route::post('/pedidos/{pedido}/confirmar-oc', [Crm\PedidoController::class, 'confirmarOc'])->whereNumber('pedido')->name('pedidos.confirmar-oc');
+    });
+
     // Secciones del menú que se construyen en tareas posteriores: ya tienen su
     // ruta y su control de acceso, para que el menú por rol sea real.
     foreach ([
         'oportunidades' => ['oportunidades', 'Pipeline de oportunidades', 'T-015'],
-        'pedidos' => ['pedidos', 'Pedidos', 'T-016'],
         'despachos' => ['despachos', 'Despachos', 'T-017'],
         'flota' => ['flota', 'Flota', 'T-017'],
         'alertas' => ['alertas', 'Alertas de frío', 'T-017'],

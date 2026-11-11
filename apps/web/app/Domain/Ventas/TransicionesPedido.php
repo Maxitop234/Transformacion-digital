@@ -11,6 +11,7 @@ use App\Models\Usuario;
 use Database\Seeders\CatalogoSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Servicio único de transiciones de estado del pedido (BUSINESS_RULES.md §4,
@@ -20,8 +21,13 @@ use Illuminate\Support\Facades\DB;
  * `TransicionInvalida` → 409), valida que el actor pueda hacerla (si no,
  * 403), actualiza el estado y escribe `historial_estado_pedido`.
  *
- * Efectos sobre el stock que ya aplica: al cancelar se libera la reserva.
- * Los de la logística (salida al entregar, rechazo) los agrega T-017.
+ * Efectos sobre el stock (DATA_MODEL.md §2, mismo criterio que los datos de
+ * demo): al cancelar se libera la reserva; al entregar se libera y sale del
+ * stock (`salida`); al rechazar la carga se libera y se da de baja (`merma`).
+ *
+ * Cancelar, rechazar y reprogramar una entrega fallida exigen comentario.
+ * Los efectos sobre despachos y paradas los agrega T-017 alrededor de este
+ * mismo servicio.
  */
 final class TransicionesPedido
 {
@@ -55,7 +61,39 @@ final class TransicionesPedido
         ],
     ];
 
+    /**
+     * Pasos que exigen explicar el porqué (quién, cuándo y por qué).
+     *
+     * @var list<array{0: string, 1: string}>
+     */
+    public const CON_COMENTARIO = [
+        [Estado::PENDIENTE, Estado::CANCELADO],
+        [Estado::CONFIRMADO, Estado::CANCELADO],
+        [Estado::EN_RUTA, Estado::RECHAZADO],
+        [Estado::EN_RUTA, Estado::CONFIRMADO],
+    ];
+
     public function __construct(private readonly ReservasStock $reservas) {}
+
+    public static function exigeComentario(string $origen, string $destino): bool
+    {
+        return in_array([$origen, $destino], self::CON_COMENTARIO, true);
+    }
+
+    /**
+     * Estados a los que el actor puede llevar el pedido desde su estado actual.
+     *
+     * @return list<string>
+     */
+    public function disponibles(Pedido $pedido, Usuario $actor): array
+    {
+        $origen = $pedido->estadoPedido()->value('nombre');
+
+        return array_values(array_filter(
+            array_keys(self::TRANSICIONES[$origen] ?? []),
+            fn (string $destino) => $this->puede($actor, self::TRANSICIONES[$origen][$destino], $pedido),
+        ));
+    }
 
     /**
      * @param  Usuario|null  $actor  null = el sistema
@@ -79,6 +117,10 @@ final class TransicionesPedido
                 throw new AuthorizationException('Tu rol no puede hacer este cambio de estado.');
             }
 
+            if (self::exigeComentario($origen, $destino) && trim((string) $comentario) === '') {
+                throw ValidationException::withMessages(['comentario' => "Indica el motivo para pasar de «{$origen}» a «{$destino}»."]);
+            }
+
             $idUsuario = $actor?->id_usuario ?? self::idUsuarioSistema();
 
             $pedido->id_estado_pedido = Estado::idDe($destino);
@@ -89,12 +131,15 @@ final class TransicionesPedido
                 'id_estado_pedido' => $pedido->id_estado_pedido,
                 'id_usuario' => $idUsuario,
                 'fecha_hora' => now(),
-                'comentario' => $comentario,
+                'comentario' => $comentario !== null && trim($comentario) !== '' ? trim($comentario) : null,
             ]);
 
-            if ($destino === Estado::CANCELADO) {
-                $this->reservas->liberar($pedido, $idUsuario);
-            }
+            match ($destino) {
+                Estado::CANCELADO => $this->reservas->liberar($pedido, $idUsuario),
+                Estado::ENTREGADO => $this->reservas->despachar($pedido, $idUsuario, 'salida'),
+                Estado::RECHAZADO => $this->reservas->despachar($pedido, $idUsuario, 'merma'),
+                default => null,
+            };
 
             return $pedido;
         });

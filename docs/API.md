@@ -70,10 +70,10 @@ Roles: `V` vendedor, `D` despachador, `A` administrador.
 | GET | `/crm/oportunidades` | V A | Pipeline en columnas por etapa | RN-10 |
 | POST | `/crm/oportunidades` | V A | Crea una oportunidad | |
 | PATCH | `/crm/oportunidades/{id}/etapa` | V A | Mueve de etapa si se cumple la condición; exige motivo al perder | RN-09 |
-| GET | `/crm/pedidos` | V D A | Listado con filtros por estado, canal y fecha | |
-| GET | `/crm/pedidos/{id}` | V D A | Detalle, historial, despacho, temperatura y tickets | |
-| POST | `/crm/pedidos/{id}/estado` | V D A | Aplica una transición válida para el rol `{estado, comentario}` | RN-09 |
-| POST | `/crm/pedidos/{id}/confirmar-oc` | V A | Valida la orden de compra B2B y confirma | RN-05 |
+| GET | `/crm/pedidos` | V D A | Listado con filtros `estado`, `canal`, `desde`, `hasta` (fecha del pedido) y `cliente` (razón social). El vendedor ve solo su cartera | RN-10 |
+| GET | `/crm/pedidos/{id}` | V D A | Detalle: productos con precio pactado, historial con responsable y comentario, pago, despacho y tickets; ofrece solo las transiciones válidas para el rol | RN-09 |
+| POST | `/crm/pedidos/{id}/estado` | V D A | Aplica una transición válida para el rol `{estado, comentario}`. Cancelar, rechazar y reprogramar exigen comentario (422). Rol no permitido: 403; transición inexistente: 409. «Pendiente → Confirmado» no va por aquí (pago en línea o `confirmar-oc`) | RN-09 |
+| POST | `/crm/pedidos/{id}/confirmar-oc` | V A | `{comentario?}`. Valida la orden de compra B2B: pago `credito_30d` → `aprobado`, pedido → «Confirmado» y, si el cliente tenía una oportunidad en «Propuesta» o «Negociación», la gana con este pedido. Sin OC pendiente: 409 | RN-05 |
 | GET | `/crm/despachos` | D A | Despachos por fecha y estado | |
 | POST | `/crm/despachos` | D A | Crea un despacho con camión, conductor y pedidos del mismo rango de frío | RN-07 |
 | POST | `/crm/despachos/{id}/salida` | D A | Registra la salida; los pedidos pasan a «En ruta» | |

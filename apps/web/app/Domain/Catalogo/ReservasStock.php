@@ -72,6 +72,29 @@ final class ReservasStock
         }
     }
 
+    /**
+     * La carga deja la bodega: se libera la reserva y se descuenta del stock
+     * físico, como `salida` (entregado) o `merma` (rechazado por el cliente).
+     */
+    public function despachar(Pedido $pedido, int $idUsuario, string $tipo): void
+    {
+        $detalles = DetallePedido::where('id_pedido', $pedido->id_pedido)->orderBy('id_producto')->get();
+
+        foreach ($detalles as $detalle) {
+            $cantidad = (string) $detalle->cantidad;
+
+            DB::update(
+                'UPDATE inventario
+                    SET stock_reservado = stock_reservado - ?, stock_disponible = stock_disponible - ?, actualizado_en = now()
+                  WHERE id_producto = ?',
+                [$cantidad, $cantidad, $detalle->id_producto],
+            );
+
+            $this->movimiento($pedido, $detalle->id_producto, 'liberacion', '-'.$cantidad, $idUsuario);
+            $this->movimiento($pedido, $detalle->id_producto, $tipo, '-'.$cantidad, $idUsuario);
+        }
+    }
+
     private function movimiento(Pedido $pedido, int $idProducto, string $tipo, string $cantidad, int $idUsuario): void
     {
         MovimientoInventario::create([
