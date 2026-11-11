@@ -33,6 +33,17 @@ final class Precios
             return new PerfilPrecio($publica, $usuario?->esPersonal() ? 'Personal de Cofrial' : 'Visitante', false, false, null);
         }
 
+        return $this->perfilDeCliente($cliente);
+    }
+
+    /**
+     * Perfil de un cliente sin pasar por su cuenta (pedido telefónico del CRM,
+     * T-014): un prospecto sin usuario también tiene lista y estado.
+     */
+    public function perfilDeCliente(Cliente $cliente): PerfilPrecio
+    {
+        $cliente->loadMissing(['tipoCliente', 'listaPrecio']);
+        $publica = $this->listaPublica();
         $esB2B = $cliente->tipoCliente->codigo === 'B2B';
         $activo = $cliente->estado_cliente === 'activo';
         $lista = $activo && $this->vigente($cliente->listaPrecio) ? $cliente->listaPrecio : $publica;

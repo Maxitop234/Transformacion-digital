@@ -40,7 +40,14 @@ Route::prefix('crm')->name('crm.')->middleware(['auth', 'rol:administrador,vende
 
     Route::middleware('can:clientes')->group(function () {
         Route::get('/clientes', [Crm\ClienteController::class, 'index'])->name('clientes.index');
+        Route::get('/clientes/nuevo', [Crm\ClienteController::class, 'create'])->name('clientes.create');
+        Route::post('/clientes/nuevo', [Crm\ClienteController::class, 'store'])->name('clientes.store');
         Route::get('/clientes/{cliente}', [Crm\ClienteController::class, 'show'])->whereNumber('cliente')->name('clientes.show');
+        Route::post('/clientes/{cliente}/validar', [Crm\ClienteController::class, 'validar'])->whereNumber('cliente')->name('clientes.validar');
+        Route::post('/clientes/{cliente}/contactos', [Crm\FichaClienteController::class, 'contacto'])->whereNumber('cliente')->name('clientes.contactos.store');
+        Route::post('/clientes/{cliente}/interacciones', [Crm\FichaClienteController::class, 'interaccion'])->whereNumber('cliente')->name('clientes.interacciones.store');
+        Route::get('/clientes/{cliente}/pedidos/nuevo', [Crm\PedidoTelefonicoController::class, 'create'])->whereNumber('cliente')->name('clientes.pedidos.create');
+        Route::post('/clientes/{cliente}/pedidos', [Crm\PedidoTelefonicoController::class, 'store'])->whereNumber('cliente')->name('clientes.pedidos.store');
     });
 
     // Secciones del menú que se construyen en tareas posteriores: ya tienen su

@@ -40,7 +40,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 | Tarea | Título | Depende de | Pauta | RC | Estado |
 | --- | --- | --- | --- | :-: | --- |
 | [T-013](T-013-panel-crm/README.md) | Panel del CRM | T-006 | 2 | ● | Terminada |
-| [T-014](T-014-gestion-de-clientes/README.md) | Gestión de clientes y prospectos | T-013 | 2 | ● | Pendiente |
+| [T-014](T-014-gestion-de-clientes/README.md) | Gestión de clientes y prospectos | T-013 | 2 | ● | Terminada |
 | [T-015](T-015-pipeline-de-oportunidades/README.md) | Pipeline de oportunidades | T-014 | 2 |  | Pendiente |
 | [T-016](T-016-gestion-de-pedidos/README.md) | Gestión de pedidos en el CRM | T-011, T-013 | 2 | ● | Pendiente |
 | [T-017](T-017-logistica-y-alertas/README.md) | Despachos, flota y alertas de frío | T-016 | 2, 3 |  | Pendiente |

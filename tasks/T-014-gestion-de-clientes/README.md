@@ -37,12 +37,15 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] Tras la validación, la empresa ve su lista institucional y puede comprar.
-- [ ] Test: el pedido telefónico reutiliza `CrearPedido` y respeta mínimo, stock y precio de lista.
-- [ ] Test: un vendedor no puede validar ni abrir un cliente de otra cartera.
-- [ ] Cada interacción queda con fecha, tipo y vendedor.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] Tras la validación, la empresa ve su lista institucional y puede comprar.
+- [x] Test: el pedido telefónico reutiliza `CrearPedido` y respeta mínimo, stock y precio de lista.
+- [x] Test: un vendedor no puede validar ni abrir un cliente de otra cartera.
+- [x] Cada interacción queda con fecha, tipo y vendedor.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
-_Sin notas todavía. Registrar aquí decisiones, comandos útiles y pendientes al trabajar la tarea._
+- **Verificación (2026-11-11):** 152 tests en verde (1 omitido, `EsquemaCoincideConDataModelTest`, que dentro del contenedor no ve `docs/`), 11 nuevos en `tests/Feature/Crm/GestionClientesTest.php`: búsqueda por nombre o RUT y filtros dentro de la cartera; ficha completa; prospecto con oportunidad e historial; RUT inválido o repetido; RN-02 validación (la empresa pasa a ver su lista institucional y a poder comprar) y sus rechazos (lista pública, sin RUT, ya activa → 409); RN-10 sin acceso a clientes de otra cartera (404 en ficha, validación, contactos, interacciones y pedido); interacción con fecha, tipo y vendedor; contacto principal; RN-08 pedido telefónico con mínimo, stock y precio de lista; y bloqueo para cuentas que no pueden comprar. Recorrido en el navegador con `vendedor2@cofrial.example`: filtro de pendientes, ficha de Hotel Demo Volcán Azul, interacción registrada y pedido telefónico N.º 177 al Hospital Demo Lago Sur (20 kg de CAR-001 a $11.170, OC pendiente). No se validó Volcán Azul en la demo, para conservar la empresa pendiente para la defensa; la validación está cubierta por tests.
+- **Reutilización:** `CrearPedido` ahora tiene `__invoke` (carrito del portal) y `telefonico` (líneas del vendedor), con un único núcleo privado `registrar()`. `Precios` suma `perfilDeCliente()` para clientes sin cuenta. Los mensajes de `CrearPedido` y `SinStock` quedaron neutros («del cliente»), porque sirven a los dos canales.
+- **Decisiones:** solo se valida una empresa `pendiente_validacion` con RUT (un prospecto manual pasa a pendiente cuando se registra en el portal, T-009). Al validar, el vendedor queda él mismo como responsable; solo el administrador elige otro. Un prospecto manual siempre abre su oportunidad en «Prospecto nuevo» (BUSINESS_RULES.md §5 y §6). El pedido telefónico de un B2C queda «Pendiente» y lo paga el cliente en el portal; si no paga en 30 minutos, se cancela como cualquier pedido B2C.
+- **Fuera de alcance, sin hacer:** alta y edición de puntos de entrega desde el CRM (no estaba en el alcance; los crea el registro de T-009 o `/mis-direcciones` de T-012) y la edición de los datos del cliente.

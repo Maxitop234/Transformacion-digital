@@ -7,6 +7,6 @@ class SinStock extends ConflictoPedido
 {
     public function __construct(public readonly string $producto)
     {
-        parent::__construct("No queda stock suficiente de {$producto}. Revisa tu carrito.");
+        parent::__construct("No queda stock suficiente de {$producto}.");
     }
 }

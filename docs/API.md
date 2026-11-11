@@ -58,14 +58,15 @@ Roles: `V` vendedor, `D` despachador, `A` administrador.
 | Método | Ruta | Roles | Descripción | Reglas |
 | --- | --- | --- | --- | --- |
 | GET | `/crm` | V D A | Panel. V y A: indicadores (oportunidades abiertas, conversión y pedidos por canal en `CONVERSION_VENTANA_DIAS`, tickets abiertos), empresas pendientes de validación y oportunidades sin interacciones en `OPORTUNIDAD_SIN_ACTIVIDAD_DIAS`. V, D y A: alertas de frío abiertas con los pedidos y clientes afectados. El vendedor ve solo su cartera; el despachador, ningún bloque comercial | RN-10 |
-| GET | `/crm/clientes` | V A | Cartera (el vendedor ve solo la suya) | RN-10 |
-| GET, POST | `/crm/clientes/nuevo` | V A | Ingresa un prospecto | |
+| GET | `/crm/clientes` | V A | Cartera (el vendedor ve solo la suya). Filtros `q` (nombre o RUT), `tipo` (`B2B`, `B2C`) y `estado` | RN-10 |
+| GET, POST | `/crm/clientes/nuevo` | V A | Ingresa un prospecto `{tipo, nombre_razon_social, rut?, origen, titulo_oportunidad, id_vendedor (A), contacto_*?}` en estado `prospecto`, con su oportunidad en «Prospecto nuevo». El vendedor lo ingresa a su propia cartera | RN-10 |
 | GET | `/crm/clientes/{id}` | V A | Ficha: datos, contactos, puntos de entrega, interacciones, pedidos, tickets | |
-| POST | `/crm/clientes/{id}/validar` | V A | Valida una empresa: asigna lista de precios y vendedor | RN-02 |
+| POST | `/crm/clientes/{id}/validar` | V A | Valida una empresa pendiente con RUT `{id_lista_precio, id_vendedor (A)}`: lista institucional vigente, vendedor (el vendedor se asigna a sí mismo), `fecha_validacion` y estado `activo`. Otro estado: 409 | RN-02 |
 | PATCH | `/crm/clientes/{id}/vendedor` | A | Reasigna la cartera | RN-10 |
-| POST | `/crm/clientes/{id}/contactos` | V A | Agrega un contacto | |
-| POST | `/crm/clientes/{id}/interacciones` | V A | Registra llamada, visita o correo | |
-| POST | `/crm/clientes/{id}/pedidos` | V A | Pedido telefónico con los mismos precios y reglas (`canal = crm`) | RN-08 |
+| POST | `/crm/clientes/{id}/contactos` | V A | Agrega un contacto `{nombre, cargo?, email, telefono?, es_principal?}`; un nuevo principal reemplaza al anterior | |
+| POST | `/crm/clientes/{id}/interacciones` | V A | Registra `{tipo: llamada\|correo\|reunion\|visita\|mensaje, resumen, id_oportunidad?}` con fecha y vendedor (el del cliente si la registra un administrador) | |
+| GET | `/crm/clientes/{id}/pedidos/nuevo` | V A | Formulario del pedido telefónico con los precios de la lista del cliente | RN-08 |
+| POST | `/crm/clientes/{id}/pedidos` | V A | Pedido telefónico `{lineas[{id_producto, cantidad}], id_direccion, fecha_entrega_solicitada, orden_compra (B2B), observaciones?}` con `CrearPedido::telefonico()`: mismos precios, mínimo y reserva que el portal; `canal = crm` e `id_vendedor_registra`. Sin stock: 409 en JSON, en HTML vuelve con el error | RN-08 |
 | GET | `/crm/oportunidades` | V A | Pipeline en columnas por etapa | RN-10 |
 | POST | `/crm/oportunidades` | V A | Crea una oportunidad | |
 | PATCH | `/crm/oportunidades/{id}/etapa` | V A | Mueve de etapa si se cumple la condición; exige motivo al perder | RN-09 |

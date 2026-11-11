@@ -140,7 +140,7 @@ class PedidoTest extends TestCase
 
         $this->actingAs($beto)->post('/pedidos', $this->datosCheckout($beto))
             ->assertRedirect('/carrito')
-            ->assertSessionHasErrors(['pedido' => 'No queda stock suficiente de Producto de prueba. Revisa tu carrito.']);
+            ->assertSessionHasErrors(['pedido' => 'No queda stock suficiente de Producto de prueba.']);
         $this->actingAs($beto)->postJson('/pedidos', $this->datosCheckout($beto))->assertStatus(409);
 
         $this->assertSame(1, Pedido::count());

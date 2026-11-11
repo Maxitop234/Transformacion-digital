@@ -173,7 +173,7 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 
 ## Pedidos y pago (T-011)
 
-- **`CrearPedido`** (`app/Domain/Ventas`): en una transacción bloquea el carrito, valida punto de entrega propio y activo, fecha (`CalendarioEntregas`: desde el siguiente día hábil, lunes a sábado) y pedido mínimo (`negocio.pedido_minimo`; B2C sobre el total con IVA, B2B sobre el neto), crea `pedido` y `detalle_pedido` con el precio de la lista vigente (RN-01), reserva stock, escribe el historial «Pendiente» y pasa el carrito a `convertido`. B2B deja un `pago` `credito_30d` pendiente con la orden de compra.
+- **`CrearPedido`** (`app/Domain/Ventas`): `__invoke` (portal) y `telefonico` (CRM, T-014) comparten el mismo núcleo. En una transacción bloquea el carrito (portal), valida punto de entrega propio y activo, fecha (`CalendarioEntregas`: desde el siguiente día hábil, lunes a sábado) y pedido mínimo (`negocio.pedido_minimo`; B2C sobre el total con IVA, B2B sobre el neto), crea `pedido` y `detalle_pedido` con el precio de la lista vigente (RN-01), reserva stock, escribe el historial «Pendiente» y pasa el carrito a `convertido`. B2B deja un `pago` `credito_30d` pendiente con la orden de compra.
 - **`ReservasStock`** (`app/Domain/Catalogo`): la reserva es un `UPDATE` condicional sobre `inventario` (`stock_disponible − stock_reservado >= cantidad`), en orden de `id_producto`. Dos compras del último stock: la segunda espera el bloqueo de fila y luego no actualiza nada → `SinStock` (409). Cada reserva y liberación deja su `movimiento_inventario`.
 - **`TransicionesPedido`**: único lugar que cambia `pedido.id_estado_pedido`. La tabla `TRANSICIONES` replica BUSINESS_RULES.md §4 con quién puede hacer cada paso (`sistema`, `cliente` dueño, `vendedor` de la cartera, `despachador`; el administrador puede todo). Transición inexistente → `TransicionInvalida` (409); actor no permitido → 403. Al cancelar libera la reserva. El actor `null` es el usuario técnico `sistema`.
 - **`PagarPedido`**: pasarela simulada B2C. Cada intento es una fila de `pago`; el aprobado confirma el pedido (actor: sistema). Vence a los `negocio.reserva_stock_minutos_b2c` minutos de `fecha_pedido`.
@@ -189,6 +189,14 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **Sin actividad:** la última actividad es la interacción más reciente ligada a la oportunidad o, si la interacción no tiene oportunidad, al mismo cliente; sin interacciones, la fecha de creación.
 - **Alertas:** rupturas de frío no resueltas cruzadas con el despacho del camión que estaba en ruta a la hora de la lectura y sus paradas aún no entregadas, el mismo criterio que la vista `bi_pedido_afectado_alerta` (T-020). El vendedor ve solo las alertas que tocan a sus clientes, y solo esos clientes. Administrador y despachador ven además el total de alertas abiertas de la flota.
 - **Umbrales:** `OPORTUNIDAD_SIN_ACTIVIDAD_DIAS` (15) y `CONVERSION_VENTANA_DIAS` (90) en `config/negocio.php`.
+
+## Gestión de clientes (T-014)
+
+- **Controladores:** `Crm\ClienteController` (listado con filtros, ficha, prospecto, validación), `Crm\FichaClienteController` (contactos e interacciones) y `Crm\PedidoTelefonicoController`. Todos resuelven el cliente con `visiblePara()` (RN-10: ajeno → 404) y la policy `update`.
+- **Prospecto** (`App\Domain\Clientes\RegistrarProspecto`): estado `prospecto`, lista «Público general», sin cuenta; abre su oportunidad en «Prospecto nuevo» con `historial_etapa`. RUT opcional, validado y único (se guarda normalizado `12345678-5`).
+- **Validación** (`ValidarEmpresa`, RN-02): solo B2B `pendiente_validacion` con RUT; lista institucional activa y vigente; el vendedor queda como responsable (el administrador puede elegir otro). Desde ese momento `Precios::perfil()` le da su lista y puede comprar.
+- **Interacciones** (`App\Domain\Crm\RegistrarInteraccion`): fecha `now()`, tipo de la lista y vendedor (el que la registra o, si es administrador, el del cliente); la oportunidad debe ser del mismo cliente. **Contactos** (`AgregarContacto`): un nuevo principal reemplaza al anterior en la misma transacción.
+- **Pedido telefónico** (RN-08): `CrearPedido::telefonico()` comparte con el portal el mismo núcleo (`registrar()`): precio de la lista del cliente (`Precios::perfilDeCliente()`), mínimo, reserva de stock, historial y OC para B2B. Queda con `canal = crm`, `id_vendedor_registra` y sin carrito. Un B2C paga desde el portal dentro de los 30 minutos de reserva.
 
 ## Configuración relevante
 
