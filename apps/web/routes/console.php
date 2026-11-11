@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Ventas\CancelarPedidosSinPago;
 use App\Domain\Ventas\MarcarCarritosAbandonados;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -14,5 +15,11 @@ Artisan::command('carritos:marcar-abandonados', function (MarcarCarritosAbandona
     $this->info('Carritos marcados como abandonados: '.$marcar());
 })->purpose('Marca como abandonados los carritos sin actividad');
 
+// RN-04: pedidos B2C sin pago tras `negocio.reserva_stock_minutos_b2c` → Cancelado (T-011).
+Artisan::command('pedidos:cancelar-sin-pago', function (CancelarPedidosSinPago $cancelar) {
+    $this->info('Pedidos B2C cancelados por falta de pago: '.$cancelar());
+})->purpose('Cancela los pedidos B2C sin pago y libera su reserva');
+
 // Hay dos instancias web: el lock en la caché de la base deja correr una sola.
 Schedule::command('carritos:marcar-abandonados')->everyFifteenMinutes()->onOneServer()->withoutOverlapping();
+Schedule::command('pedidos:cancelar-sin-pago')->everyMinute()->onOneServer()->withoutOverlapping();

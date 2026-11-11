@@ -39,10 +39,10 @@ La aplicación es un monolito Laravel renderizado en el servidor. La mayoría de
 | POST | `/carrito/items` | Agrega `{sku, cantidad}` (cantidad opcional, 1 por defecto) y suma si el producto ya estaba; crea el carrito si no existe. No reserva stock | RN-02, RN-04 |
 | PATCH | `/carrito/items/{sku}` | Fija la cantidad; si supera el disponible para venta se ajusta y avisa | RN-04 |
 | DELETE | `/carrito/items/{sku}` | Quita el producto | |
-| GET | `/checkout` | Punto de entrega, fecha, forma de pago y totales (neto, IVA, total) | RN-03, RN-05, RN-06 |
-| POST | `/pedidos` | Crea el pedido «Pendiente», copia el precio pactado y reserva stock | RN-01, RN-03, RN-04 |
-| GET | `/pedidos/{id}/pago` | Pasarela simulada (solo B2C) | RN-05 |
-| POST | `/pedidos/{id}/pago` | Resultado simulado `{resultado: aprobado \| rechazado}`; aprobado confirma el pedido | RN-05 |
+| GET | `/checkout` | Punto de entrega activo con su ventana, fecha (desde el siguiente día hábil, lunes a sábado), forma de pago según el perfil y totales (neto, IVA, total). «Confirmar pedido» se deshabilita bajo el mínimo, con líneas sin precio o sobre el disponible | RN-03, RN-05, RN-06 |
+| POST | `/pedidos` | `{id_direccion, fecha_entrega_solicitada, orden_compra (B2B), observaciones?}`. Crea el pedido «Pendiente», copia el precio pactado, reserva stock y marca el carrito `convertido`. B2C → pasarela; B2B → pago `credito_30d` pendiente con la OC. Bajo el mínimo: 422. Sin stock: 409 (en HTML vuelve al carrito con el aviso) | RN-01, RN-03, RN-04, RN-05 |
+| GET | `/pedidos/{id}/pago` | Pasarela simulada (solo B2C; B2B: 403; pedido ajeno: 404) | RN-05 |
+| POST | `/pedidos/{id}/pago` | Resultado simulado `{metodo: tarjeta \| transferencia, resultado: aprobado \| rechazado}`; aprobado confirma el pedido; rechazado permite reintentar. Pedido que ya no está «Pendiente» o con el plazo de 30 min vencido: 409 | RN-05 |
 | GET | `/mis-pedidos` | Historial del cliente (B2B: de toda la empresa) | |
 | GET | `/mis-pedidos/{id}` | Línea de tiempo, despacho y estado de frío, sin datos del conductor | RN-09 |
 | POST | `/mis-pedidos/{id}/cancelar` | Cancela si el estado lo permite y libera la reserva | RN-04 |

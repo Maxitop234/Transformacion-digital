@@ -19,6 +19,14 @@ Route::prefix('carrito')->middleware(['auth', 'can:portal.comprar'])->group(func
     Route::delete('/items/{sku}', [Portal\CarritoController::class, 'destroy'])->name('portal.carrito.items.destroy');
 });
 
+// Checkout, pedido y pago simulado (T-011).
+Route::middleware(['auth', 'can:portal.comprar'])->group(function () {
+    Route::get('/checkout', [Portal\CheckoutController::class, 'show'])->name('portal.checkout');
+    Route::post('/pedidos', [Portal\CheckoutController::class, 'store'])->name('portal.pedidos.store');
+    Route::get('/pedidos/{pedido}/pago', [Portal\PagoController::class, 'show'])->whereNumber('pedido')->name('portal.pedidos.pago');
+    Route::post('/pedidos/{pedido}/pago', [Portal\PagoController::class, 'store'])->whereNumber('pedido')->name('portal.pedidos.pago.store');
+});
+
 // Sesión (clientes y personal).
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'mostrar'])->name('login');

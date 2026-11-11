@@ -13,6 +13,27 @@ class EstadoPedido extends Modelo
 
     protected $primaryKey = 'id_estado_pedido';
 
+    // Nombres del catálogo (DATA_MODEL.md §3). Las transiciones válidas viven en
+    // App\Domain\Ventas\TransicionesPedido.
+    public const PENDIENTE = 'Pendiente';
+
+    public const CONFIRMADO = 'Confirmado';
+
+    public const EN_PREPARACION = 'En preparación';
+
+    public const EN_RUTA = 'En ruta';
+
+    public const ENTREGADO = 'Entregado';
+
+    public const RECHAZADO = 'Rechazado';
+
+    public const CANCELADO = 'Cancelado';
+
+    public static function idDe(string $nombre): int
+    {
+        return static::where('nombre', $nombre)->valueOrFail('id_estado_pedido');
+    }
+
     /** @var list<string> */
     protected $fillable = [
         'nombre',

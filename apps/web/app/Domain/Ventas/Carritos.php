@@ -98,7 +98,7 @@ final class Carritos
 
     /**
      * Líneas y totales con los precios vigentes de la lista del cliente.
-     * Neto = Σ precio × cantidad (al peso); IVA sobre el neto; total = neto + IVA.
+     * Montos con `Montos` (los mismos que usa `CrearPedido`).
      */
     public function resumen(PerfilPrecio $perfil): ResumenCarrito
     {
@@ -119,7 +119,7 @@ final class Carritos
         foreach ($items as $item) {
             $producto = $item->producto;
             $precio = $producto->activo ? $precios->get($item->id_producto) : null;
-            $subtotal = $precio === null ? null : self::subtotalNeto($precio, (string) $item->cantidad);
+            $subtotal = $precio === null ? null : Montos::subtotalNeto($precio, (string) $item->cantidad);
             $neto += $subtotal ?? 0;
 
             $lineas[] = new LineaCarrito(
@@ -131,17 +131,9 @@ final class Carritos
             );
         }
 
-        $iva = (int) round($neto * config('negocio.iva_pct') / 100);
+        $iva = Montos::iva($neto);
 
         return new ResumenCarrito($carrito, $lineas, $neto, $iva, $neto + $iva);
-    }
-
-    /** precio (NUMERIC 2 dec.) × cantidad (NUMERIC 2 dec.) en enteros, redondeado al peso. */
-    public static function subtotalNeto(string $precio, string $cantidad): int
-    {
-        $diezMilesimas = self::aCentesimas($precio) * self::aCentesimas($cantidad);
-
-        return intdiv($diezMilesimas + 5000, 10000);
     }
 
     private function clienteQueCompra(PerfilPrecio $perfil): Cliente
@@ -245,19 +237,18 @@ final class Carritos
         return in_array($producto->unidad_medida, self::UNIDADES_FRACCIONABLES, true);
     }
 
-    /** Las cantidades y precios son NUMERIC(12,2): se opera en centésimas enteras. */
     private static function aCentesimas(string $valor): int
     {
-        return (int) round(((float) $valor) * 100);
+        return Montos::centesimas($valor);
     }
 
     private static function decimal(int $centesimas): string
     {
-        return number_format($centesimas / 100, 2, '.', '');
+        return Montos::decimal($centesimas);
     }
 
     private static function legible(int $centesimas): string
     {
-        return rtrim(rtrim(number_format($centesimas / 100, 2, ',', '.'), '0'), ',');
+        return Montos::legible($centesimas);
     }
 }

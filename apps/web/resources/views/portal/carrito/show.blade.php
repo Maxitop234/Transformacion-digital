@@ -91,9 +91,9 @@
             <dd class="border-t border-slate-200 pt-1 text-right font-semibold" data-total="{{ $resumen->total }}">{{ $precios::clp($resumen->total) }}</dd>
         </dl>
 
-        <div class="mt-6 flex justify-between">
+        <div class="mt-6 flex items-center justify-between">
             <a href="{{ route('portal.catalogo') }}" class="text-sky-700 hover:underline">← Seguir comprando</a>
-            <span class="text-sm text-slate-500">El pago y la fecha de entrega se eligen en el checkout.</span>
+            <a href="{{ route('portal.checkout') }}" class="rounded bg-sky-700 px-4 py-2 text-white hover:bg-sky-800" data-ir-checkout>Ir al checkout</a>
         </div>
     @endif
 @endsection

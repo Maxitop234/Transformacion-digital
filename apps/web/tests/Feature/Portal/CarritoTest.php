@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Portal;
 
-use App\Domain\Ventas\Carritos;
+use App\Domain\Ventas\Montos;
 use App\Models\Carrito;
 use App\Models\Categoria;
 use App\Models\Cliente;
@@ -228,10 +228,10 @@ class CarritoTest extends TestCase
 
     public function test_el_subtotal_se_calcula_en_enteros_y_se_redondea_al_peso(): void
     {
-        $this->assertSame(8985, Carritos::subtotalNeto('5990.00', '1.50'));
-        $this->assertSame(3, Carritos::subtotalNeto('0.33', '10.00')); // 3,30
-        $this->assertSame(4, Carritos::subtotalNeto('2.50', '1.40')); // 3,50 → 4
-        $this->assertSame(30000, Carritos::subtotalNeto('10000.00', '3.00'));
+        $this->assertSame(8985, Montos::subtotalNeto('5990.00', '1.50'));
+        $this->assertSame(3, Montos::subtotalNeto('0.33', '10.00')); // 3,30
+        $this->assertSame(4, Montos::subtotalNeto('2.50', '1.40')); // 3,50 → 4
+        $this->assertSame(30000, Montos::subtotalNeto('10000.00', '3.00'));
     }
 
     public function test_un_producto_que_sale_de_la_lista_queda_fuera_de_los_totales(): void

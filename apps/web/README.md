@@ -171,6 +171,16 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **Abandono:** `php artisan carritos:marcar-abandonados` (`MarcarCarritosAbandonados`) pasa a `abandonado` los carritos `activo` cuyo `actualizado_en` tiene más de `CARRITO_ABANDONO_HORAS` horas. Corre cada 15 minutos en el planificador (`routes/console.php`, `onOneServer`); en local lo ejecuta el servicio `scheduler` de Compose.
 - **Concurrencia:** cada escritura bloquea la fila del carrito (`FOR UPDATE`); la creación usa `createOrFirst` sobre el índice único parcial `carrito_activo_unique`.
 
+## Pedidos y pago (T-011)
+
+- **`CrearPedido`** (`app/Domain/Ventas`): en una transacción bloquea el carrito, valida punto de entrega propio y activo, fecha (`CalendarioEntregas`: desde el siguiente día hábil, lunes a sábado) y pedido mínimo (`negocio.pedido_minimo`; B2C sobre el total con IVA, B2B sobre el neto), crea `pedido` y `detalle_pedido` con el precio de la lista vigente (RN-01), reserva stock, escribe el historial «Pendiente» y pasa el carrito a `convertido`. B2B deja un `pago` `credito_30d` pendiente con la orden de compra.
+- **`ReservasStock`** (`app/Domain/Catalogo`): la reserva es un `UPDATE` condicional sobre `inventario` (`stock_disponible − stock_reservado >= cantidad`), en orden de `id_producto`. Dos compras del último stock: la segunda espera el bloqueo de fila y luego no actualiza nada → `SinStock` (409). Cada reserva y liberación deja su `movimiento_inventario`.
+- **`TransicionesPedido`**: único lugar que cambia `pedido.id_estado_pedido`. La tabla `TRANSICIONES` replica BUSINESS_RULES.md §4 con quién puede hacer cada paso (`sistema`, `cliente` dueño, `vendedor` de la cartera, `despachador`; el administrador puede todo). Transición inexistente → `TransicionInvalida` (409); actor no permitido → 403. Al cancelar libera la reserva. El actor `null` es el usuario técnico `sistema`.
+- **`PagarPedido`**: pasarela simulada B2C. Cada intento es una fila de `pago`; el aprobado confirma el pedido (actor: sistema). Vence a los `negocio.reserva_stock_minutos_b2c` minutos de `fecha_pedido`.
+- **`CancelarPedidosSinPago`**: `php artisan pedidos:cancelar-sin-pago`, cada minuto en el planificador (`onOneServer`). Cancela los B2C «Pendiente» vencidos y libera su reserva; los B2B esperan al vendedor.
+- Conflictos de negocio (`ConflictoPedido` y subclases) son `HttpException` 409: JSON `{message}` o la vista `errors/409`.
+- `tests/Feature/Portal/PedidoConcurrenciaTest` usa dos conexiones reales a PostgreSQL: confirma sus datos (sin transacción envolvente) y vacía las tablas en `tearDown`.
+
 ## Configuración relevante
 
 - `DB_SSLMODE`: `prefer` en local, `require` (o `verify-full`) contra RDS.

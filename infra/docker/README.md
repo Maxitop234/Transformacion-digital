@@ -23,7 +23,7 @@ Todos los servicios usan reinicio automático (`restart: unless-stopped`), porqu
 | `db` | `postgis/postgis:16-3.4` | PostgreSQL 16 + PostGIS, mismo motor que RDS. Datos en el volumen `cofrial_db-data` | `pg_isready` |
 | `web` | `cofrial/web:dev` (este Dockerfile) | PHP-FPM con el código de `apps/web` montado | `/health` pedido a PHP-FPM: sano solo si llega a la base |
 | `worker` | `cofrial/web:dev` | `php artisan queue:work` (colas en la base) | — |
-| `scheduler` | `cofrial/web:dev` | `php artisan schedule:work`: trabajos programados de `routes/console.php` (abandono de carritos, T-010) | — |
+| `scheduler` | `cofrial/web:dev` | `php artisan schedule:work`: trabajos programados de `routes/console.php` (abandono de carritos, T-010; cancelación de pedidos B2C sin pago, T-011) | — |
 | `assets` | `node:22.23.3-alpine` | Instala las dependencias de Node (`package-lock.json`) y compila CSS (Tailwind) y JS con Vite en `apps/web/public/build`; vuelve a compilar al editar vistas, CSS o JS | Existe `public/build/manifest.json` |
 | `nginx` | `nginx:1.30.5-alpine` | Publica la aplicación en `http://localhost:8080` y `/bi` | `/health` a través de Nginx |
 | `grafana` | `grafana/grafana:13.2.5` | Grafana OSS en `/bi`, con su estado en la base `grafana` | `/bi/api/health` |
