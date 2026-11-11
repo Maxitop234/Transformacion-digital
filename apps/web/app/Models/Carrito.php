@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\EnCartera;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Carrito extends Modelo
 {
+    use EnCartera;
+
     protected $table = 'carrito';
 
     protected $primaryKey = 'id_carrito';

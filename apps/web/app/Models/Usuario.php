@@ -85,4 +85,33 @@ class Usuario extends Authenticatable
     {
         return $this->hasMany(Alerta::class, 'id_usuario_resuelve', 'id_usuario');
     }
+
+    /** El rol se usa en casi toda petición autenticada. */
+    protected $with = ['rol'];
+
+    public function nombreRol(): string
+    {
+        return $this->rol->nombre;
+    }
+
+    public function tieneRol(string ...$roles): bool
+    {
+        return in_array($this->nombreRol(), $roles, true);
+    }
+
+    public function esPersonal(): bool
+    {
+        return $this->tieneRol(...Rol::PERSONAL);
+    }
+
+    public function esAdministrador(): bool
+    {
+        return $this->tieneRol(Rol::ADMINISTRADOR);
+    }
+
+    /** Ruta de inicio según el rol: el personal va al CRM y los clientes al portal. */
+    public function rutaInicio(): string
+    {
+        return $this->esPersonal() ? route('crm.inicio') : route('portal.inicio');
+    }
 }

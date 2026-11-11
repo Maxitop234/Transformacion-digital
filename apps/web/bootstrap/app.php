@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\CerrarSesionSiInactivo;
+use App\Http\Middleware\ExigirRol;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // El modo mantenimiento se guarda en la base (caché `database`). /health
         // queda fuera para que una base caída responda 503 y no un error 500.
         $middleware->preventRequestsDuringMaintenance(except: ['health']);
+
+        $middleware->alias(['rol' => ExigirRol::class]);
+        $middleware->web(append: [CerrarSesionSiInactivo::class]);
+
+        // Quien ya inició sesión y abre /login vuelve a su inicio según el rol.
+        $middleware->redirectUsersTo(fn (Request $request) => $request->user()->rutaInicio());
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\EnCartera;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class DireccionDespacho extends Modelo
 {
+    use EnCartera;
+
     protected $table = 'direccion_despacho';
 
     protected $primaryKey = 'id_direccion';

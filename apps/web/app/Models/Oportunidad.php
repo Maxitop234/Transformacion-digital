@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\EnCartera;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Oportunidad extends Modelo
 {
+    use EnCartera;
+
     protected $table = 'oportunidad';
 
     protected $primaryKey = 'id_oportunidad';

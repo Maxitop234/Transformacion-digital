@@ -44,6 +44,10 @@ lang/es                                                 textos del framework en 
 app/Models                                              un modelo Eloquent por tabla del MER (34), sobre la base App\Models\Modelo
 app/Models/Concerns                                     TieneClaveCompuesta (PK de dos columnas) y SoloInsercion (historiales)
 database/migrations                                     una migración por tabla, en orden de dependencias (ADR-0016)
+app/Domain/Clientes/Permisos.php                        matriz de áreas por rol; cada área es un gate (`can:oportunidades`)
+app/Domain/Clientes/AlcanceCartera.php                  RN-10: qué clientes ve cada usuario; scope `visiblePara()`
+app/Http/Middleware/{ExigirRol,CerrarSesionSiInactivo}  `rol:...` (403) y revocación inmediata al desactivar
+app/Http/Controllers/Auth/LoginController.php           inicio y cierre de sesión con límite de intentos
 tests/Feature/Esquema                                   tablas, restricciones, modelos y coincidencia con DATA_MODEL.md
 ```
 
@@ -127,12 +131,31 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 
 `sistema@cofrial.example` es el usuario técnico de los cambios automáticos: está inactivo y su contraseña es aleatoria.
 
+## Acceso y roles
+
+- **Sesión:** `/login` y `POST /logout` sobre `usuario` (`email`, `password_hash`). Un usuario inactivo no entra (mismo mensaje que una contraseña incorrecta) y, si se desactiva con la sesión abierta, sale en la siguiente petición. Cada inicio registra `ultimo_acceso`. 5 intentos fallidos por cuenta e IP bloquean un minuto (más un tope de 20 por minuto por IP).
+- **Destino tras entrar:** el personal va a `/crm` y los clientes a `/`, o a la página que pidieron si su rol la permite.
+- **Áreas por rol** (`App\Domain\Clientes\Permisos`, una por gate; el menú del CRM muestra solo las permitidas):
+
+| Área | Administrador | Vendedor | Despachador | Clientes |
+| --- | :-: | :-: | :-: | :-: |
+| `crm` (todo `/crm`; si no, 403) | ● | ● | ● | |
+| `clientes`, `oportunidades`, `tickets` | ● | ● | | |
+| `pedidos`, `alertas` | ● | ● | ● | |
+| `despachos`, `flota` | ● | | ● | |
+| `administracion` | ● | | | |
+| `portal.comprar` | | | | ● |
+
+- **Cartera (RN-10):** `Cliente::visiblePara($usuario)` (y lo mismo en `ContactoCliente`, `DireccionDespacho`, `Carrito`, `Oportunidad`, `Interaccion`, `Ticket` y `Pedido`, este último a través de su dirección) limita la consulta: el vendedor ve solo sus clientes, el cliente del portal solo a sí mismo y el administrador y el despachador todo. Un identificador ajeno responde 404. `ClientePolicy` decide las acciones sobre un cliente visible (por ejemplo, solo el administrador reasigna).
+- Las secciones del CRM que aún no existen (`/crm/oportunidades`, `/crm/pedidos`, `/crm/despachos`, …) ya tienen ruta y gate y muestran «se construye en T-0xx».
+
 ## Configuración relevante
 
 - `DB_SSLMODE`: `prefer` en local, `require` (o `verify-full`) contra RDS.
 - `DB_CONNECT_TIMEOUT`: segundos antes de abandonar la conexión; mantiene `/health` por debajo del timeout del balanceador.
 - La zona horaria de la aplicación y de la sesión de PostgreSQL es `APP_TIMEZONE` (`America/Santiago`). Las columnas `TIMESTAMPTZ` guardan el instante absoluto (UTC), así que no hay ambigüedad al leerlas desde otros componentes.
 - Sesiones, caché, colas y modo mantenimiento usan la base (`database`); ninguno usa `file`.
+- Cookie de sesión `HttpOnly` y `SameSite=lax` (valores de Laravel); `SESSION_SECURE_COOKIE=true` en AWS para que viaje solo por HTTPS.
 - Parámetros de negocio (pedido mínimo, minutos de reserva, horas de abandono del carrito, IVA) en `config/negocio.php`, leídos de `PEDIDO_MINIMO_B2C`, `PEDIDO_MINIMO_B2B`, `RESERVA_STOCK_MINUTOS_B2C`, `CARRITO_ABANDONO_HORAS` e `IVA_PCT`.
 
 ## Referencias

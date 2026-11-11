@@ -13,6 +13,20 @@
     <header class="border-b border-slate-200">
         <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
             <a href="{{ route('portal.inicio') }}" class="font-semibold">{{ config('app.name') }}</a>
+            <div class="flex items-center gap-4 text-sm">
+                @auth
+                    @can('crm')
+                        <a href="{{ route('crm.inicio') }}" class="text-sky-700 hover:underline">CRM</a>
+                    @endcan
+                    <span class="text-slate-600">{{ auth()->user()->email }}</span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="text-sky-700 hover:underline">Cerrar sesión</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="text-sky-700 hover:underline">Iniciar sesión</a>
+                @endauth
+            </div>
         </nav>
     </header>
 

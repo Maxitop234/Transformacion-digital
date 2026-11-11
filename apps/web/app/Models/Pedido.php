@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Domain\Clientes\AlcanceCartera;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -88,5 +90,20 @@ class Pedido extends Modelo
     public function despachosPedido(): HasMany
     {
         return $this->hasMany(DespachoPedido::class, 'id_pedido', 'id_pedido');
+    }
+
+    /**
+     * RN-10: el pedido no tiene `id_cliente` (3FN); se filtra por el cliente
+     * de su dirección de despacho.
+     *
+     * @param  Builder<static>  $consulta
+     * @return Builder<static>
+     */
+    public function scopeVisiblePara(Builder $consulta, Usuario $usuario): Builder
+    {
+        return $consulta->whereIn(
+            $consulta->qualifyColumn('id_direccion'),
+            AlcanceCartera::aplicar(DireccionDespacho::query()->select('id_direccion'), $usuario),
+        );
     }
 }

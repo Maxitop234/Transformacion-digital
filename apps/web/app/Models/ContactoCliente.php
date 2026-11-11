@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\EnCartera;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ContactoCliente extends Modelo
 {
+    use EnCartera;
+
     protected $table = 'contacto_cliente';
 
     protected $primaryKey = 'id_contacto';
