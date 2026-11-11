@@ -38,7 +38,7 @@
             @elseif ($precioNeto !== null)
                 <p class="text-xs text-slate-500">{{ \App\Domain\Catalogo\Precios::clp(app(\App\Domain\Catalogo\Precios::class)->conIva($precioNeto)) }} con IVA</p>
             @endif
-            <div class="mt-4">@include('portal.catalogo._agregar', ['neto' => $precioNeto])</div>
+            <div class="mt-4">@include('portal.catalogo._agregar', ['neto' => $precioNeto, 'conCantidad' => true])</div>
         </aside>
     </article>
 @endsection

@@ -7,7 +7,7 @@ Dockerfiles y archivos Compose del sistema.
 | `web/Dockerfile` | Imagen PHP-FPM 8.4 con `pdo_pgsql`, `intl`, `zip` y `opcache` para Laravel (web y worker) | [T-002](../../tasks/T-002-entorno-local-docker/README.md) |
 | `nginx/` | Nginx: publica Laravel y deriva `/bi` a Grafana | T-002 |
 | `db/01-inicializar-dev.sh` | Inicialización local de la base: usuarios con [`db/roles.sql`](../../db/roles.sql), PostGIS, base de tests `cofrial_test` y base interna de Grafana | T-002, T-003, T-005 |
-| `compose.dev.yml` | Entorno local completo: base, web, nginx, worker, compilación de assets, Grafana y las cinco réplicas del simulador IoT | T-002, T-019 |
+| `compose.dev.yml` | Entorno local completo: base, web, nginx, worker, planificador, compilación de assets, Grafana y las cinco réplicas del simulador IoT | T-002, T-019 |
 | `compose.prod.yml` (por crear) | EC2 web: Nginx, aplicación, worker, planificador y Grafana | [T-024](../../tasks/T-024-despliegue-web-y-balanceador/README.md) |
 | `compose.iot.yml` | Nodo IoT: cinco contenedores del simulador con solo las variables `IOT_*`; se despliega en [T-025](../../tasks/T-025-despliegue-nodo-iot/README.md) | [T-019](../../tasks/T-019-simulador-iot/README.md), T-025 |
 | [`../../apps/iot-simulator/Dockerfile`](../../apps/iot-simulator/Dockerfile) | Imagen Python 3.12 del simulador (`runtime`) y de sus tests (`test`) | T-019 |
@@ -23,6 +23,7 @@ Todos los servicios usan reinicio automático (`restart: unless-stopped`), porqu
 | `db` | `postgis/postgis:16-3.4` | PostgreSQL 16 + PostGIS, mismo motor que RDS. Datos en el volumen `cofrial_db-data` | `pg_isready` |
 | `web` | `cofrial/web:dev` (este Dockerfile) | PHP-FPM con el código de `apps/web` montado | `/health` pedido a PHP-FPM: sano solo si llega a la base |
 | `worker` | `cofrial/web:dev` | `php artisan queue:work` (colas en la base) | — |
+| `scheduler` | `cofrial/web:dev` | `php artisan schedule:work`: trabajos programados de `routes/console.php` (abandono de carritos, T-010) | — |
 | `assets` | `node:22.23.3-alpine` | Instala las dependencias de Node (`package-lock.json`) y compila CSS (Tailwind) y JS con Vite en `apps/web/public/build`; vuelve a compilar al editar vistas, CSS o JS | Existe `public/build/manifest.json` |
 | `nginx` | `nginx:1.30.5-alpine` | Publica la aplicación en `http://localhost:8080` y `/bi` | `/health` a través de Nginx |
 | `grafana` | `grafana/grafana:13.2.5` | Grafana OSS en `/bi`, con su estado en la base `grafana` | `/bi/api/health` |

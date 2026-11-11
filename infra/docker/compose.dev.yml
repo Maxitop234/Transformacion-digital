@@ -82,6 +82,15 @@ services:
       web:
         condition: service_healthy
 
+  # Planificador de Laravel (routes/console.php): trabajos programados como el
+  # abandono de carritos (T-010).
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      web:
+        condition: service_healthy
+
   # Compila CSS (Tailwind) y JS con Vite en apps/web/public/build y los vuelve
   # a compilar al cambiar vistas, CSS o JS. Las dependencias de Node se
   # instalan en apps/web/node_modules (ignorado por git) desde package-lock.json.

@@ -35,9 +35,9 @@ La aplicación es un monolito Laravel renderizado en el servidor. La mayoría de
 
 | Método | Ruta | Descripción | Reglas |
 | --- | --- | --- | --- |
-| GET | `/carrito` | Carrito abierto con precios de la lista del cliente | RN-01 |
-| POST | `/carrito/items` | Agrega `{sku, cantidad}`; crea el carrito si no existe | RN-04 |
-| PATCH | `/carrito/items/{sku}` | Cambia la cantidad; se ajusta al disponible y avisa | RN-04 |
+| GET | `/carrito` | Carrito activo con precios de la lista vigente del cliente; neto, IVA y total | RN-01 |
+| POST | `/carrito/items` | Agrega `{sku, cantidad}` (cantidad opcional, 1 por defecto) y suma si el producto ya estaba; crea el carrito si no existe. No reserva stock | RN-02, RN-04 |
+| PATCH | `/carrito/items/{sku}` | Fija la cantidad; si supera el disponible para venta se ajusta y avisa | RN-04 |
 | DELETE | `/carrito/items/{sku}` | Quita el producto | |
 | GET | `/checkout` | Punto de entrega, fecha, forma de pago y totales (neto, IVA, total) | RN-03, RN-05, RN-06 |
 | POST | `/pedidos` | Crea el pedido «Pendiente», copia el precio pactado y reserva stock | RN-01, RN-03, RN-04 |

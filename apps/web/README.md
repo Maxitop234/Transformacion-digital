@@ -8,7 +8,7 @@ Aplicación Laravel que contiene el portal B2B/B2C, el CRM, el worker de colas y
 | --- | --- | --- |
 | Clientes y accesos | Inicio de sesión, registro, roles | T-006, T-009 |
 | Catálogo e inventario | `/catalogo`, mantenedores | T-007, T-008 |
-| Ventas | Carrito, checkout, pedidos, pagos simulados | T-010 a T-012 |
+| Ventas | Carrito (`app/Domain/Ventas`), checkout, pedidos, pagos simulados | T-010 a T-012 |
 | CRM | `/crm`: panel, clientes, pipeline, pedidos, tickets | T-013 a T-016, T-018 |
 | Logística | Despachos, flota, alertas de frío | T-017 |
 | IA | Clasificación de tickets y asistente | T-021 |
@@ -160,6 +160,16 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 
 - **Cartera (RN-10):** `Cliente::visiblePara($usuario)` (y lo mismo en `ContactoCliente`, `DireccionDespacho`, `Carrito`, `Oportunidad`, `Interaccion`, `Ticket` y `Pedido`, este último a través de su dirección) limita la consulta: el vendedor ve solo sus clientes, el cliente del portal solo a sí mismo y el administrador y el despachador todo. Un identificador ajeno responde 404. `ClientePolicy` decide las acciones sobre un cliente visible (por ejemplo, solo el administrador reasigna).
 - Las secciones del CRM que aún no existen (`/crm/oportunidades`, `/crm/pedidos`, `/crm/despachos`, …) ya tienen ruta y gate y muestran «se construye en T-0xx».
+
+## Carrito (T-010)
+
+- **Servicio:** `App\Domain\Ventas\Carritos` (`agregar`, `cambiarCantidad`, `quitar`, `resumen`). Controlador delgado `Portal\CarritoController`; rutas `/carrito` y `/carrito/items[/{sku}]` con el gate `portal.comprar`.
+- **Sin identificador en la URL:** el carrito se resuelve siempre desde la sesión (cliente → su carrito `activo`), así que un cliente no puede nombrar ni tocar el de otro.
+- **Precios (RN-01):** el carrito no guarda precio. `resumen()` los pide a `Precios` con la lista vigente del cliente en cada vista. Subtotal = precio × cantidad en centésimas enteras, redondeado al peso; IVA sobre el neto total; total = neto + IVA. B2B ve las líneas en neto y B2C con IVA, y ambos ven el desglose neto, IVA y total.
+- **Stock (RN-04):** agregar no reserva. Si la cantidad supera el disponible para venta se ajusta y se avisa (`session('aviso')`); sin disponible, no se agrega. Si después otro pedido reserva stock, la vista marca la línea (`data-excede`).
+- **Cantidades:** `kg` acepta dos decimales; `un` y `caja`, solo enteros.
+- **Abandono:** `php artisan carritos:marcar-abandonados` (`MarcarCarritosAbandonados`) pasa a `abandonado` los carritos `activo` cuyo `actualizado_en` tiene más de `CARRITO_ABANDONO_HORAS` horas. Corre cada 15 minutos en el planificador (`routes/console.php`, `onOneServer`); en local lo ejecuta el servicio `scheduler` de Compose.
+- **Concurrencia:** cada escritura bloquea la fila del carrito (`FOR UPDATE`); la creación usa `createOrFirst` sobre el índice único parcial `carrito_activo_unique`.
 
 ## Configuración relevante
 

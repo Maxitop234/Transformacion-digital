@@ -11,6 +11,14 @@ Route::get('/', Portal\InicioController::class)->name('portal.inicio');
 Route::get('/catalogo', [Portal\CatalogoController::class, 'index'])->name('portal.catalogo');
 Route::get('/productos/{sku}', [Portal\CatalogoController::class, 'show'])->name('portal.productos.show');
 
+// Carrito (T-010): solo cuentas de cliente; cada una ve únicamente el suyo.
+Route::prefix('carrito')->middleware(['auth', 'can:portal.comprar'])->group(function () {
+    Route::get('/', [Portal\CarritoController::class, 'show'])->name('portal.carrito');
+    Route::post('/items', [Portal\CarritoController::class, 'store'])->name('portal.carrito.items.store');
+    Route::patch('/items/{sku}', [Portal\CarritoController::class, 'update'])->name('portal.carrito.items.update');
+    Route::delete('/items/{sku}', [Portal\CarritoController::class, 'destroy'])->name('portal.carrito.items.destroy');
+});
+
 // Sesión (clientes y personal).
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'mostrar'])->name('login');

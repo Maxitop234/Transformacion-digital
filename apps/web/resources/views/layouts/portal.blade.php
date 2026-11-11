@@ -17,6 +17,9 @@
             <div class="flex items-center gap-4 text-sm">
                 <a href="{{ route('portal.catalogo') }}" class="text-sky-700 hover:underline">Catálogo</a>
                 @auth
+                    @can('portal.comprar')
+                        <a href="{{ route('portal.carrito') }}" class="text-sky-700 hover:underline" data-enlace-carrito>Carrito</a>
+                    @endcan
                     @can('crm')
                         <a href="{{ route('crm.inicio') }}" class="text-sky-700 hover:underline">CRM</a>
                     @endcan
@@ -33,6 +36,7 @@
     </header>
 
     <main class="mx-auto max-w-6xl px-4 py-8">
+        @include('portal._mensajes')
         @yield('contenido')
     </main>
 
