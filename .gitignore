@@ -1,0 +1,80 @@
+# --- Secretos y configuración local (nunca al repositorio) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.ppk
+*.crt
+*.p12
+labsuser.*
+.aws/
+credentials
+*.tfvars
+!*.tfvars.example
+
+# --- Laravel / PHP (apps/web) ---
+vendor/
+node_modules/
+apps/web/public/build/
+apps/web/public/hot
+apps/web/public/storage
+apps/web/storage/*.key
+apps/web/storage/app/*
+apps/web/storage/framework/cache/*
+apps/web/storage/framework/sessions/*
+apps/web/storage/framework/testing/*
+apps/web/storage/framework/views/*
+apps/web/storage/logs/*
+!apps/web/storage/**/.gitignore
+apps/web/bootstrap/cache/*
+!apps/web/bootstrap/cache/.gitignore
+.phpunit.cache/
+.phpunit.result.cache
+.php-cs-fixer.cache
+.phpactor.json
+npm-debug.log*
+yarn-error.log
+
+# --- Python (apps/iot-simulator) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Docker / datos locales ---
+docker-compose.override.yml
+.docker-data/
+pgdata/
+grafana-data/
+*.sql.gz
+*.dump
+backups/
+
+# --- Infraestructura ---
+.terraform/
+*.tfstate
+*.tfstate.*
+cdk.out/
+
+# --- Agentes de IA (estado local, no la configuración compartida) ---
+.claude/settings.local.json
+.claude/worktrees/
+CLAUDE.local.md
+
+# --- Editor / SO ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Documentos fuente pesados (el contenido vive destilado en docs/) ---
+*.docx
+~$*
