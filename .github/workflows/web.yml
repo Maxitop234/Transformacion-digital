@@ -27,6 +27,26 @@ jobs:
     defaults:
       run:
         working-directory: apps/web
+    # Los tests corren contra PostgreSQL 16 + PostGIS, el mismo motor que RDS.
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: app_rw
+          POSTGRES_PASSWORD: ci-solo-pruebas
+          POSTGRES_DB: cofrial_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app_rw -d cofrial_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_USERNAME: app_rw
+      DB_PASSWORD: ci-solo-pruebas
     steps:
       - uses: actions/checkout@v4
 
