@@ -12,7 +12,7 @@ El portal y el CRM comparten clientes, precios, pedidos y reglas. El informe de 
 
 ## Decisión
 
-Una sola aplicación Laravel en `apps/web`, organizada por dominios (`Clientes`, `Catalogo`, `Ventas`, `Crm`, `Logistica`, `Ia`), con dos superficies: portal en `/` y CRM en `/crm`. La interfaz se renderiza en el servidor. **Propuesta pendiente de confirmar en T-001:** Blade con Livewire para las partes interactivas (carrito, pipeline).
+Una sola aplicación Laravel en `apps/web`, organizada por dominios (`Clientes`, `Catalogo`, `Ventas`, `Crm`, `Logistica`, `Ia`), con dos superficies: portal en `/` y CRM en `/crm`. La interfaz se renderiza en el servidor con Blade, y Livewire para las partes interactivas (carrito, pipeline). *Confirmado en T-001 (2026-11-10): Laravel 13 y Livewire 4; versiones exactas en [`apps/web/README.md`](../../apps/web/README.md).*
 
 ## Alternativas consideradas
 

@@ -21,7 +21,7 @@ La aplicación es un monolito Laravel renderizado en el servidor. La mayoría de
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/health` | `JSON`. Chequeo del balanceador: `200 {"status":"ok"}` si la aplicación responde y llega a la base; `503` si no. Sin autenticación, sin datos sensibles |
+| GET | `/health` | `JSON`. Chequeo del balanceador: `200 {"status":"ok"}` si la aplicación responde y llega a la base; `503 {"status":"unavailable"}` si no (la conexión corta a los `DB_CONNECT_TIMEOUT` segundos). Sin autenticación, sin sesión, fuera del modo mantenimiento, sin datos sensibles |
 | GET | `/` | Portada del portal |
 | GET | `/catalogo` | Catálogo. Sin sesión muestra la lista «Público general». Filtros: `categoria`, `rango`, `disponible`, `q` |
 | GET | `/productos/{sku}` | Detalle de producto |
