@@ -82,10 +82,16 @@ Roles: `V` vendedor, `D` despachador, `A` administrador.
 | POST | `/crm/alertas/{id}/resolver` | D A | Registra la acción correctiva y cierra la alerta | |
 | GET | `/crm/tickets` | V A | Tickets con categoría y prioridad | RN-11 |
 | PATCH | `/crm/tickets/{id}` | V A | Reclasifica, asigna o cierra | RN-11 |
-| GET, POST, PATCH | `/crm/admin/productos` | A | Mantención de catálogo | |
-| GET, POST, PATCH | `/crm/admin/listas-precio` | A | Listas de precios y sus precios | |
-| GET, POST, PATCH | `/crm/admin/inventario` | A | Ingresos y ajustes de stock (generan `movimiento_inventario`) | |
-| GET, POST, PATCH | `/crm/admin/usuarios` | A | Usuarios y roles; activar y desactivar | |
+| GET | `/crm/admin` | A | Índice de los mantenedores | |
+| GET, POST | `/crm/admin/productos`, `/crm/admin/productos/nuevo` | A | Catálogo: listado con búsqueda y alta (crea su `inventario` en cero) | |
+| GET, PATCH | `/crm/admin/productos/{id}` | A | Edita categoría, rango de conservación, unidad y activo | |
+| GET, POST | `/crm/admin/listas-precio`, `/crm/admin/listas-precio/nueva` | A | Listas de precios y alta | |
+| GET, PATCH | `/crm/admin/listas-precio/{id}` | A | Edita nombre, vigencia y activa | |
+| PATCH | `/crm/admin/listas-precio/{id}/precios` | A | Fija `precios[id_producto]`; vacío quita el producto de la lista. No toca pedidos existentes | RN-01 |
+| GET, POST | `/crm/admin/inventario` | A | Stock por producto y registro `{id_producto, tipo: ingreso\|ajuste, cantidad}`; cada uno genera `movimiento_inventario` con el responsable | RN-04 |
+| GET, POST | `/crm/admin/usuarios`, `/crm/admin/usuarios/nuevo` | A | Usuarios; el alta es solo para personal (las cuentas de cliente nacen en el portal) | |
+| GET, PATCH | `/crm/admin/usuarios/{id}` | A | Correo, rol, contraseña, activar y desactivar | |
+| PATCH | `/crm/admin/usuarios/{id}/cartera` | A | Mueve toda la cartera del vendedor a `id_vendedor_destino` | RN-10 |
 
 ### 1.5 Asistente IA
 

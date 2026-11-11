@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Crm;
+use App\Http\Controllers\Crm\Admin;
 use App\Http\Controllers\Portal;
 use Illuminate\Support\Facades\Route;
 
@@ -33,10 +34,39 @@ Route::prefix('crm')->name('crm.')->middleware(['auth', 'rol:administrador,vende
         'flota' => ['flota', 'Flota', 'T-017'],
         'alertas' => ['alertas', 'Alertas de frío', 'T-017'],
         'tickets' => ['tickets', 'Tickets', 'T-018'],
-        'admin' => ['administracion', 'Administración', 'T-007'],
     ] as $ruta => [$area, $titulo, $tarea]) {
         Route::view("/{$ruta}", 'crm.seccion-pendiente', ['titulo' => $titulo, 'tarea' => $tarea])
             ->middleware("can:{$area}")
             ->name($ruta);
     }
+
+    // Mantenedores de administración (T-007): solo el administrador.
+    Route::prefix('admin')->middleware('can:administracion')->group(function () {
+        Route::view('/', 'crm.admin.inicio')->name('admin');
+
+        Route::name('admin.')->group(function () {
+            Route::get('/productos', [Admin\ProductoController::class, 'index'])->name('productos.index');
+            Route::get('/productos/nuevo', [Admin\ProductoController::class, 'create'])->name('productos.create');
+            Route::post('/productos', [Admin\ProductoController::class, 'store'])->name('productos.store');
+            Route::get('/productos/{producto}', [Admin\ProductoController::class, 'edit'])->whereNumber('producto')->name('productos.edit');
+            Route::patch('/productos/{producto}', [Admin\ProductoController::class, 'update'])->whereNumber('producto')->name('productos.update');
+
+            Route::get('/listas-precio', [Admin\ListaPrecioController::class, 'index'])->name('listas-precio.index');
+            Route::get('/listas-precio/nueva', [Admin\ListaPrecioController::class, 'create'])->name('listas-precio.create');
+            Route::post('/listas-precio', [Admin\ListaPrecioController::class, 'store'])->name('listas-precio.store');
+            Route::get('/listas-precio/{lista}', [Admin\ListaPrecioController::class, 'edit'])->whereNumber('lista')->name('listas-precio.edit');
+            Route::patch('/listas-precio/{lista}', [Admin\ListaPrecioController::class, 'update'])->whereNumber('lista')->name('listas-precio.update');
+            Route::patch('/listas-precio/{lista}/precios', [Admin\ListaPrecioController::class, 'precios'])->whereNumber('lista')->name('listas-precio.precios');
+
+            Route::get('/inventario', [Admin\InventarioController::class, 'index'])->name('inventario.index');
+            Route::post('/inventario', [Admin\InventarioController::class, 'store'])->name('inventario.store');
+
+            Route::get('/usuarios', [Admin\UsuarioController::class, 'index'])->name('usuarios.index');
+            Route::get('/usuarios/nuevo', [Admin\UsuarioController::class, 'create'])->name('usuarios.create');
+            Route::post('/usuarios', [Admin\UsuarioController::class, 'store'])->name('usuarios.store');
+            Route::get('/usuarios/{usuario}', [Admin\UsuarioController::class, 'edit'])->whereNumber('usuario')->name('usuarios.edit');
+            Route::patch('/usuarios/{usuario}', [Admin\UsuarioController::class, 'update'])->whereNumber('usuario')->name('usuarios.update');
+            Route::patch('/usuarios/{usuario}/cartera', [Admin\UsuarioController::class, 'reasignarCartera'])->whereNumber('usuario')->name('usuarios.cartera');
+        });
+    });
 });
