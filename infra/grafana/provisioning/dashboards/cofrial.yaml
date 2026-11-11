@@ -1,0 +1,17 @@
+# Dashboards versionados (T-020): Grafana carga los JSON de
+# infra/grafana/dashboards al arrancar y los relee cada 30 s. No se pueden
+# guardar cambios desde la interfaz: se editan, se exportan y se versionan aquí.
+apiVersion: 1
+
+providers:
+  - name: cofrial
+    orgId: 1
+    folder: Cofrial
+    folderUid: cofrial
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/dashboards
+      foldersFromFilesStructure: false

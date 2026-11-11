@@ -26,7 +26,7 @@ Todos los servicios usan reinicio automático (`restart: unless-stopped`), porqu
 | `scheduler` | `cofrial/web:dev` | `php artisan schedule:work`: trabajos programados de `routes/console.php` (abandono de carritos, T-010; cancelación de pedidos B2C sin pago, T-011) | — |
 | `assets` | `node:22.23.3-alpine` | Instala las dependencias de Node (`package-lock.json`) y compila CSS (Tailwind) y JS con Vite en `apps/web/public/build`; vuelve a compilar al editar vistas, CSS o JS | Existe `public/build/manifest.json` |
 | `nginx` | `nginx:1.30.5-alpine` | Publica la aplicación en `http://localhost:8080` y `/bi` | `/health` a través de Nginx |
-| `grafana` | `grafana/grafana:13.2.5` | Grafana OSS en `/bi`, con su estado en la base `grafana` | `/bi/api/health` |
+| `grafana` | `grafana/grafana:13.2.5` | Grafana OSS en `/bi`, con su estado en la base `grafana`; datasource y dashboard desde [`infra/grafana`](../grafana/README.md) (T-020) | `/bi/api/health` |
 | `iot-1` … `iot-5` | `cofrial/iot-simulator:dev` | Simulador IoT: cada réplica escribe 10 camiones (`IOT_GRUPO` 1 a 5) cada 30 s como `iot_writer`. Ver [`apps/iot-simulator`](../../apps/iot-simulator/README.md) | — (reintenta solo si la base no responde) |
 
 Los puertos solo se abren en `127.0.0.1`: la aplicación en `8080` y PostgreSQL en `5432`. Si ya tienes algo en esos puertos, exporta `COFRIAL_WEB_PUERTO_LOCAL` o `COFRIAL_DB_PUERTO_LOCAL` antes de levantar.

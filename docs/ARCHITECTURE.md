@@ -185,7 +185,9 @@ El contrato exacto está en [`API.md`](API.md#2-contrato-de-telemetría-iot).
 
 Grafana OSS corre en cada EC2 web y se sirve bajo `/bi` a través de Nginx (ADR-0010). Usa la misma RDS como base interna para que el dashboard sea idéntico en ambas instancias, y consulta los datos de negocio con `bi_reader` sobre vistas `bi_*` definidas en [`db/`](../db). Los dashboards se versionan como JSON en [`infra/grafana`](../infra/grafana).
 
-Paneles mínimos: ventas por día y por canal, pedidos por estado, conversión del pipeline, mapa y temperatura de la flota, alertas de frío abiertas, y el cruce **pedidos y clientes afectados por alertas de frío**.
+Paneles mínimos: ventas por día y por canal, pedidos por estado, conversión del pipeline, mapa y temperatura de la flota, alertas de frío abiertas, y el cruce **pedidos y clientes afectados por alertas de frío**. El dashboard se actualiza cada 30 s y se carga por provisioning al arrancar Grafana; el detalle de paneles y vistas está en [`infra/grafana/README.md`](../infra/grafana/README.md).
+
+Un pedido se considera afectado por una ruptura si estaba en una parada aún no entregada de un despacho que su camión tenía en ruta en el momento de la lectura que originó la alerta (`bi_pedido_afectado_alerta`).
 
 ### 4.4 Integración de IA
 

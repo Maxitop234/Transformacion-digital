@@ -6,9 +6,9 @@ Las tablas de negocio se crean con las migraciones de Laravel en `apps/web`. Aqu
 | --- | --- | --- |
 | [`roles.sql`](roles.sql) | Usuarios `app_rw`, `iot_writer`, `bi_reader` y `grafana_rw`, la base `grafana` y todos los permisos | [T-005](../tasks/T-005-roles-base-de-datos/README.md) |
 | [`vistas_iot.sql`](vistas_iot.sql) | Vista `iot_umbral_camion` para el simulador | T-005 |
-| [`aplicar.sh`](aplicar.sh) | Aplica `roles.sql` y `vistas_iot.sql` con los valores del `.env` | T-005 |
+| [`aplicar.sh`](aplicar.sh) | Aplica `roles.sql`, `vistas_iot.sql` y `vistas_bi.sql` con los valores del `.env` | T-005, T-020 |
 | [`pruebas_permisos.sh`](pruebas_permisos.sh) | Comprobación reproducible de los permisos de cada usuario | T-005 |
-| `vistas_bi.sql` (por crear) | Vistas `bi_*` que consulta Grafana | [T-020](../tasks/T-020-dashboard-bi/README.md) |
+| [`vistas_bi.sql`](vistas_bi.sql) | Vistas `bi_*` que consulta Grafana (ventas, pipeline, flota, alertas y pedidos afectados), sin datos personales | [T-020](../tasks/T-020-dashboard-bi/README.md) |
 
 ## Usuarios y permisos
 
@@ -17,7 +17,7 @@ Las tablas de negocio se crean con las migraciones de Laravel en `apps/web`. Aqu
 | Maestro (`postgres` en local; el maestro de RDS) | Dueño de la base y de todas las tablas: corre las migraciones y estos scripts | Usarse desde la aplicación en ejecución |
 | `app_rw` | `SELECT`, `INSERT`, `UPDATE`, `DELETE` en las tablas de negocio y de Laravel; leer y purgar `telemetria` | Crear, alterar, vaciar o borrar tablas; crear roles; modificar o borrar `historial_estado_pedido`, `historial_etapa` y `movimiento_inventario`; insertar o modificar `telemetria`; conectarse a `grafana` |
 | `iot_writer` | `INSERT` en `telemetria` y `alerta` (con `RETURNING` de la clave); leer `iot_umbral_camion` | Leer cualquier otra tabla (clientes, pedidos, precios, la propia telemetría); actualizar o borrar |
-| `bi_reader` | `SELECT` en las vistas `bi_*` (T-020) | Leer tablas directamente; insertar, actualizar o borrar |
+| `bi_reader` | `SELECT` en las vistas `bi_*` (T-020); trabaja en solo lectura (`default_transaction_read_only`) con `statement_timeout` de 15 s | Leer tablas directamente; insertar, actualizar o borrar, ni siquiera a través de las vistas |
 | `grafana_rw` | Dueño de la base `grafana` | Conectarse a la base de negocio |
 
 `roles.sql` parte de cero en cada ejecución: revoca todo a los usuarios de los componentes y concede exactamente lo de esta tabla, así un permiso dado a mano desaparece al volver a correrlo. Los privilegios por defecto (`ALTER DEFAULT PRIVILEGES`) dan a `app_rw` acceso a las tablas que creen las migraciones futuras; las restricciones por tabla (historiales, telemetría) y las vistas se aplican al volver a correr `aplicar.sh` después de migrar.
@@ -26,10 +26,10 @@ Las tablas de negocio se crean con las migraciones de Laravel en `apps/web`. Aqu
 
 1. `db/aplicar.sh`: crea los usuarios (si la base aún no tiene tablas, solo eso).
 2. `php artisan migrate --database=pgsql_admin --force`: migra con el usuario maestro.
-3. `db/aplicar.sh` otra vez: permisos sobre las tablas y vista `iot_umbral_camion`.
+3. `db/aplicar.sh` otra vez: permisos sobre las tablas y vistas `iot_umbral_camion` y `bi_*`.
 4. `db/pruebas_permisos.sh`: comprueba el resultado (todas las comprobaciones deben pasar).
 
-Repetir los pasos 2 y 3 en cada despliegue con migraciones nuevas, y el 3 después de crear o recrear vistas `bi_*`.
+Repetir los pasos 2 y 3 en cada despliegue con migraciones nuevas o cambios en las vistas. `vistas_bi.sql` recrea todas las vistas `bi_*` en una transacción y vuelve a dar el permiso a `bi_reader`.
 
 ### En local (Docker)
 

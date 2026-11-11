@@ -137,9 +137,20 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Grafana en /bi (T-020): datasource y dashboards versionados en
+  # infra/grafana; estado interno en la base `grafana` (GF_DATABASE_*).
   grafana:
     image: grafana/grafana:13.2.5
     env_file: ../../.env
+    environment:
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/cofrial-bi.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/etc/grafana/dashboards:ro
     depends_on:
       db:
         condition: service_healthy

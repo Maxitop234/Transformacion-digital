@@ -47,6 +47,13 @@ ALTER ROLE :"iot_user" WITH LOGIN PASSWORD :'iot_pass';
 ALTER ROLE :"bi_user" WITH LOGIN PASSWORD :'bi_pass';
 ALTER ROLE :"gf_user" WITH LOGIN PASSWORD :'gf_pass';
 
+-- bi_reader (Grafana) trabaja en transacciones de solo lectura y con un tope
+-- de tiempo por consulta: aunque alguien escriba un INSERT en un panel, la base
+-- lo rechaza dos veces (sin permiso y transacción de solo lectura), y una
+-- consulta pesada no queda corriendo (T-020).
+ALTER ROLE :"bi_user" SET default_transaction_read_only = on;
+ALTER ROLE :"bi_user" SET statement_timeout = '15s';
+
 -- -----------------------------------------------------------------------------
 -- 2. Base interna de Grafana (ADR-0010): de `grafana_rw` y de nadie más.
 -- -----------------------------------------------------------------------------
@@ -115,8 +122,9 @@ SELECT format('GRANT SELECT ON iot_umbral_camion TO %I', :'iot_user')
 WHERE to_regclass('iot_umbral_camion') IS NOT NULL \gexec
 
 -- -----------------------------------------------------------------------------
--- 6. bi_reader: solo las vistas bi_* (las crea T-020). Volver a correr este
---    script después de crear o recrear esas vistas.
+-- 6. bi_reader: solo las vistas bi_* (db/vistas_bi.sql, T-020). Ese
+--    script vuelve a dar el permiso al recrearlas; aquí se repite para que
+--    correr solo roles.sql no se lo quite.
 -- -----------------------------------------------------------------------------
 SELECT format('GRANT SELECT ON %I TO %I', viewname, :'bi_user')
 FROM pg_views

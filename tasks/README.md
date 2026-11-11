@@ -56,7 +56,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 
 | Tarea | Título | Depende de | Pauta | RC | Estado |
 | --- | --- | --- | --- | :-: | --- |
-| [T-020](T-020-dashboard-bi/README.md) | Dashboard de Business Intelligence | T-004, T-005, T-019 | 4 | ● | Pendiente |
+| [T-020](T-020-dashboard-bi/README.md) | Dashboard de Business Intelligence | T-004, T-005, T-019 | 4 | ● | Terminada |
 | [T-021](T-021-integracion-ia/README.md) | Integración de IA a costo cero | T-018 | 5 | ● | Pendiente |
 
 ## Fase 5 · Despliegue en AWS
