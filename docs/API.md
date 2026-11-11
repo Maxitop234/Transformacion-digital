@@ -43,11 +43,12 @@ La aplicación es un monolito Laravel renderizado en el servidor. La mayoría de
 | POST | `/pedidos` | `{id_direccion, fecha_entrega_solicitada, orden_compra (B2B), observaciones?}`. Crea el pedido «Pendiente», copia el precio pactado, reserva stock y marca el carrito `convertido`. B2C → pasarela; B2B → pago `credito_30d` pendiente con la OC. Bajo el mínimo o con productos de distintos rangos de frío: 422. Sin stock: 409 (en HTML vuelve al carrito con el aviso) | RN-01, RN-03, RN-04, RN-05, RN-07 |
 | GET | `/pedidos/{id}/pago` | Pasarela simulada (solo B2C; B2B: 403; pedido ajeno: 404) | RN-05 |
 | POST | `/pedidos/{id}/pago` | Resultado simulado `{metodo: tarjeta \| transferencia, resultado: aprobado \| rechazado}`; aprobado confirma el pedido; rechazado permite reintentar. Pedido que ya no está «Pendiente» o con el plazo de 30 min vencido: 409 | RN-05 |
-| GET | `/mis-pedidos` | Historial del cliente (B2B: de toda la empresa) | |
-| GET | `/mis-pedidos/{id}` | Línea de tiempo, despacho y estado de frío, sin datos del conductor | RN-09 |
-| POST | `/mis-pedidos/{id}/cancelar` | Cancela si el estado lo permite y libera la reserva | RN-04 |
-| POST | `/mis-pedidos/{id}/repetir` | Copia los productos al carrito con precios vigentes (B2B) | RN-01 |
-| GET, POST | `/mis-direcciones` | Puntos de entrega del cliente | RN-06 |
+| GET | `/mis-pedidos` | Historial del cliente, 20 por página (B2B: de todos los puntos de entrega de la empresa) | RN-10 |
+| GET | `/mis-pedidos/{id}` | Productos con precio pactado, línea de tiempo desde `historial_estado_pedido` y, por despacho, camión, parada, resultado de la entrega y rupturas de frío del trayecto (mismo cruce que las alertas del CRM). Sin datos del conductor. Pedido ajeno: 404 | RN-09 |
+| POST | `/mis-pedidos/{id}/cancelar` | `{motivo}`. Cancela desde «Pendiente» o «Confirmado» y libera la reserva; desde «En preparación» o posterior: 409 | RN-04 |
+| POST | `/mis-pedidos/{id}/repetir` | Copia productos y cantidades al carrito activo; el carrito cobra el precio vigente de la lista, no el pactado. Omite con aviso lo que ya no se vende o no tiene stock. Solo B2B (B2C: 403) | RN-01, RN-04 |
+| GET, POST | `/mis-direcciones` | Puntos de entrega del cliente. POST `{alias, calle, id_comuna, referencia?, ventana_inicio?, ventana_fin?}` solo B2B (B2C: 403) | RN-06 |
+| PATCH | `/mis-direcciones/{id}` | `{activa}`. Activa o desactiva un punto (B2B); siempre queda al menos uno activo. Punto ajeno: 404 | RN-06 |
 | POST | `/tickets` | Reporta un problema, opcionalmente ligado a un pedido | RN-11 |
 | POST | `/asistente/mensajes` | `JSON`. Mensaje al asistente IA (ver 1.5) | RN-11 |
 

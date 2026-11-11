@@ -38,12 +38,18 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] Test: un cliente que abre un pedido ajeno recibe 404.
-- [ ] La respuesta del detalle no contiene nombre, RUT ni teléfono del conductor.
-- [ ] Test: repetir un pedido usa el precio actual, no el pactado antes.
-- [ ] No se puede cancelar un pedido «En preparación» o posterior.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] Test: un cliente que abre un pedido ajeno recibe 404.
+- [x] La respuesta del detalle no contiene nombre, RUT ni teléfono del conductor.
+- [x] Test: repetir un pedido usa el precio actual, no el pactado antes.
+- [x] No se puede cancelar un pedido «En preparación» o posterior.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
 - Recortable: repetir pedido y direcciones múltiples pueden quedar para el final.
+- Hecho completo, incluidos repetir y direcciones. Tests en `apps/web/tests/Feature/Portal/SeguimientoPedidoTest.php` (`php artisan test --filter=SeguimientoPedidoTest`).
+- Repetir pedido es solo B2B, como dice API.md §1.3 y BUSINESS_RULES.md §2. A B2C se le responde 403.
+- Se agregó `PATCH /mis-direcciones/{id}` para activar o desactivar puntos. Los puntos no se borran porque los pedidos los referencian, y siempre queda uno activo.
+- Cancelar un pedido B2C ya pagado («Confirmado») no genera devolución: el pago simulado queda «aprobado». Si hace falta reembolso, es trabajo aparte.
+- «Reportar un problema» queda deshabilitado en el detalle. T-018 debe habilitarlo con `POST /tickets` y el `id_pedido`.
+- El historial muestra los comentarios del personal tal cual (por ejemplo, el motivo de una entrega fallida). Hoy ninguno incluye datos del conductor, pero quien escriba comentarios debe tenerlo presente.

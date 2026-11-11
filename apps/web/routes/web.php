@@ -27,6 +27,18 @@ Route::middleware(['auth', 'can:portal.comprar'])->group(function () {
     Route::post('/pedidos/{pedido}/pago', [Portal\PagoController::class, 'store'])->whereNumber('pedido')->name('portal.pedidos.pago.store');
 });
 
+// Seguimiento de pedidos y puntos de entrega (T-012). Un pedido o punto ajeno: 404.
+Route::middleware(['auth', 'can:portal.comprar'])->group(function () {
+    Route::get('/mis-pedidos', [Portal\MisPedidosController::class, 'index'])->name('portal.mis-pedidos');
+    Route::get('/mis-pedidos/{pedido}', [Portal\MisPedidosController::class, 'show'])->whereNumber('pedido')->name('portal.mis-pedidos.show');
+    Route::post('/mis-pedidos/{pedido}/cancelar', [Portal\MisPedidosController::class, 'cancelar'])->whereNumber('pedido')->name('portal.mis-pedidos.cancelar');
+    Route::post('/mis-pedidos/{pedido}/repetir', [Portal\MisPedidosController::class, 'repetir'])->whereNumber('pedido')->name('portal.mis-pedidos.repetir');
+
+    Route::get('/mis-direcciones', [Portal\DireccionController::class, 'index'])->name('portal.direcciones');
+    Route::post('/mis-direcciones', [Portal\DireccionController::class, 'store'])->name('portal.direcciones.store');
+    Route::patch('/mis-direcciones/{direccion}', [Portal\DireccionController::class, 'update'])->whereNumber('direccion')->name('portal.direcciones.update');
+});
+
 // Sesión (clientes y personal).
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'mostrar'])->name('login');

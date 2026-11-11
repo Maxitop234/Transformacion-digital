@@ -8,7 +8,7 @@ Aplicación Laravel que contiene el portal B2B/B2C, el CRM, el worker de colas y
 | --- | --- | --- |
 | Clientes y accesos | Inicio de sesión, registro, roles | T-006, T-009 |
 | Catálogo e inventario | `/catalogo`, mantenedores | T-007, T-008 |
-| Ventas | Carrito (`app/Domain/Ventas`), checkout, pedidos, pagos simulados | T-010 a T-012 |
+| Ventas | Carrito (`app/Domain/Ventas`), checkout, pedidos, pagos simulados, seguimiento y puntos de entrega | T-010 a T-012 |
 | CRM | `/crm`: panel (`app/Domain/Crm`), clientes, pipeline, pedidos, tickets | T-013 a T-016, T-018 |
 | Logística | Despachos, flota, alertas de frío | T-017 |
 | IA | Clasificación de tickets y asistente | T-021 |
@@ -180,6 +180,15 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **`CancelarPedidosSinPago`**: `php artisan pedidos:cancelar-sin-pago`, cada minuto en el planificador (`onOneServer`). Cancela los B2C «Pendiente» vencidos y libera su reserva; los B2B esperan al vendedor.
 - Conflictos de negocio (`ConflictoPedido` y subclases) son `HttpException` 409: JSON `{message}` o la vista `errors/409`.
 - `tests/Feature/Portal/PedidoConcurrenciaTest` usa dos conexiones reales a PostgreSQL: confirma sus datos (sin transacción envolvente) y vacía las tablas en `tearDown`.
+
+## Seguimiento de pedidos (T-012)
+
+- **Controladores:** `Portal\MisPedidosController` (`/mis-pedidos`, detalle, cancelar, repetir) y `Portal\DireccionController` (`/mis-direcciones`), con el gate `portal.comprar`. Todo se resuelve con `visiblePara()`: B2B ve los pedidos de todos sus puntos de entrega; un pedido o punto ajeno responde 404.
+- **`SeguimientoPedido`** (`app/Domain/Ventas`): línea de tiempo desde `historial_estado_pedido` y paradas del pedido con camión y patente. Las rupturas de frío salen de `AfectadosPorAlerta::delPedido()` (mismo cruce que el panel y la vista BI). Nunca carga `conductor` ni `despacho.id_conductor` (SECURITY.md §6).
+- **Cancelar:** pasa por `TransicionesPedido` con el actor cliente (motivo obligatorio, se guarda como «Cancelado por el cliente: …»). Solo desde «Pendiente» o «Confirmado»; después, 409. Libera la reserva.
+- **Repetir** (`RepetirPedido`, solo B2B): llama a `Carritos::agregar` por cada línea, así que aplica el precio vigente (RN-01) y el ajuste al disponible (RN-04); lo que no se puede agregar vuelve como aviso.
+- **Puntos de entrega** (`App\Domain\Clientes\PuntosEntrega`): B2B agrega puntos y los activa o desactiva (no se borran: los pedidos los referencian). Siempre queda uno activo.
+- «Reportar un problema» aparece deshabilitado hasta T-018.
 
 ## Panel del CRM (T-013)
 

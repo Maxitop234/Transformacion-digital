@@ -19,6 +19,8 @@
                 @auth
                     @can('portal.comprar')
                         <a href="{{ route('portal.carrito') }}" class="text-sky-700 hover:underline" data-enlace-carrito>Carrito</a>
+                        <a href="{{ route('portal.mis-pedidos') }}" class="text-sky-700 hover:underline" data-enlace-mis-pedidos>Mis pedidos</a>
+                        <a href="{{ route('portal.direcciones') }}" class="text-sky-700 hover:underline">Mis direcciones</a>
                     @endcan
                     @can('crm')
                         <a href="{{ route('crm.inicio') }}" class="text-sky-700 hover:underline">CRM</a>

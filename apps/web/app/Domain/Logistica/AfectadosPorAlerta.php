@@ -32,6 +32,21 @@ final class AfectadosPorAlerta
             ->groupBy('id_alerta');
     }
 
+    /**
+     * Rupturas de frío que tocaron al pedido en cada despacho (seguimiento del
+     * portal, T-012): mismo cruce, filtrado por pedido. Sin datos del conductor.
+     *
+     * @return Collection<int, Collection<int, object>> id_despacho => alertas
+     */
+    public function delPedido(int $idPedido): Collection
+    {
+        return $this->consulta(null, null, false)
+            ->where('p.id_pedido', $idPedido)
+            ->orderBy('t.fecha_hora')
+            ->get(['d.id_despacho', 'alerta.id_alerta', 'alerta.estado', 't.fecha_hora', 't.temp_camara'])
+            ->groupBy('id_despacho');
+    }
+
     /** Subconsulta con los `id_alerta` que afectan a algún cliente visible para el usuario. */
     public function idsVisibles(Usuario $usuario): Builder
     {
