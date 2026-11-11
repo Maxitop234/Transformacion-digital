@@ -49,7 +49,8 @@ La aplicación es un monolito Laravel renderizado en el servidor. La mayoría de
 | POST | `/mis-pedidos/{id}/repetir` | Copia productos y cantidades al carrito activo; el carrito cobra el precio vigente de la lista, no el pactado. Omite con aviso lo que ya no se vende o no tiene stock. Solo B2B (B2C: 403) | RN-01, RN-04 |
 | GET, POST | `/mis-direcciones` | Puntos de entrega del cliente. POST `{alias, calle, id_comuna, referencia?, ventana_inicio?, ventana_fin?}` solo B2B (B2C: 403) | RN-06 |
 | PATCH | `/mis-direcciones/{id}` | `{activa}`. Activa o desactiva un punto (B2B); siempre queda al menos uno activo. Punto ajeno: 404 | RN-06 |
-| POST | `/tickets` | Reporta un problema, opcionalmente ligado a un pedido | RN-11 |
+| GET | `/tickets` | Formulario «Reportar un problema» (`?pedido=` lo preselecciona) y los tickets del propio cliente | RN-10 |
+| POST | `/tickets` | `{asunto, descripcion, id_pedido?}`. Crea el ticket `abierto`, `sin_clasificar`, prioridad `media`, `clasificado_por_ia = false`, asignado al vendedor del cliente, y emite `TicketCreado`. Pedido ajeno: 404. Límite de 10 por minuto | RN-11 |
 | POST | `/asistente/mensajes` | `JSON`. Mensaje al asistente IA (ver 1.5) | RN-11 |
 
 ### 1.4 CRM (prefijo `/crm`)
@@ -83,8 +84,9 @@ Roles: `V` vendedor, `D` despachador, `A` administrador.
 | GET | `/crm/flota` | D A | Última lectura de cada camión, su despacho en ruta y si tiene una ruptura de frío abierta | |
 | GET | `/crm/alertas` | V D A | Alertas (`estado`: `abiertas`, `resueltas`, `todas`) con pedidos y clientes afectados. El vendedor ve solo las que tocan su cartera y solo esos clientes | RN-07, RN-10 |
 | POST | `/crm/alertas/{id}/resolver` | D A | `{accion_correctiva}` obligatoria (mínimo 10 caracteres); registra quién y cuándo. Ya resuelta: 409 | |
-| GET | `/crm/tickets` | V A | Tickets con categoría y prioridad | RN-11 |
-| PATCH | `/crm/tickets/{id}` | V A | Reclasifica, asigna o cierra | RN-11 |
+| GET | `/crm/tickets` | V A | Bandeja con filtros `categoria`, `prioridad` y `estado` (por defecto `pendientes`: abierto o en proceso), ordenada por prioridad. El vendedor ve solo su cartera | RN-10, RN-11 |
+| GET | `/crm/tickets/{id}` | V A | Detalle con cliente, pedido y formulario de gestión. Ajeno: 404 | RN-10 |
+| PATCH | `/crm/tickets/{id}` | V A | `{categoria?, prioridad?, estado?, id_vendedor?}`. Clasificar a mano deja `clasificado_por_ia = false`; resolver o cerrar exige categoría (422); cerrar registra `cerrado_en`; un ticket cerrado no cambia (409). El administrador asigna a cualquier vendedor activo; el vendedor solo puede tomarlo para sí (403) | RN-11 |
 | GET | `/crm/admin` | A | Índice de los mantenedores | |
 | GET, POST | `/crm/admin/productos`, `/crm/admin/productos/nuevo` | A | Catálogo: listado con búsqueda y alta (crea su `inventario` en cero) | |
 | GET, PATCH | `/crm/admin/productos/{id}` | A | Edita categoría, rango de conservación, unidad y activo | |

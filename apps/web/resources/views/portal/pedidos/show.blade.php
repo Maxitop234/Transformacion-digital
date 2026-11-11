@@ -124,9 +124,28 @@
                     </form>
                 @endif
 
-                {{-- El ticket se implementa en T-018 (POST /tickets). --}}
-                <button type="button" disabled class="w-full cursor-not-allowed rounded border border-slate-300 px-4 py-2 text-slate-500" data-reportar-problema title="Disponible pronto">Reportar un problema</button>
-                <p class="text-xs text-slate-500">Pronto podrás reportar problemas desde aquí. Mientras tanto, contacta a Cofrial.</p>
+            </section>
+
+            <section class="rounded border border-slate-200 p-4 text-sm" data-bloque="tickets">
+                <h2 class="font-medium">Reportar un problema</h2>
+                @if ($tickets->isNotEmpty())
+                    <ul class="mt-2 space-y-1">
+                        @foreach ($tickets as $ticket)
+                            <li data-ticket="{{ $ticket->id_ticket }}">N.º {{ $ticket->id_ticket }} · {{ $ticket->asunto }} <span class="text-xs text-slate-500">· {{ str_replace('_', ' ', $ticket->estado) }}</span></li>
+                        @endforeach
+                    </ul>
+                @endif
+                <form method="POST" action="{{ route('portal.tickets.store') }}" class="mt-3 space-y-2" data-reportar-problema>
+                    @csrf
+                    <input type="hidden" name="id_pedido" value="{{ $pedido->id_pedido }}">
+                    <label for="asunto" class="block text-slate-600">Asunto</label>
+                    <input id="asunto" name="asunto" value="{{ old('asunto') }}" maxlength="150" required class="w-full rounded border border-slate-300 px-2 py-1">
+                    @error('asunto')<p class="text-xs text-red-700">{{ $message }}</p>@enderror
+                    <label for="descripcion" class="block text-slate-600">¿Qué pasó?</label>
+                    <textarea id="descripcion" name="descripcion" rows="3" maxlength="2000" required class="w-full rounded border border-slate-300 px-2 py-1">{{ old('descripcion') }}</textarea>
+                    @error('descripcion')<p class="text-xs text-red-700">{{ $message }}</p>@enderror
+                    <button class="w-full rounded border border-slate-300 px-4 py-2 hover:bg-slate-50">Reportar un problema</button>
+                </form>
             </section>
         </div>
     </div>

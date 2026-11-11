@@ -2,12 +2,12 @@
 
 namespace App\Domain\Logistica;
 
+use App\Domain\Crm\CrearTicket;
 use App\Domain\Ventas\TransicionesPedido;
 use App\Models\Despacho;
 use App\Models\DespachoPedido;
 use App\Models\EstadoPedido;
 use App\Models\Pedido;
-use App\Models\Ticket;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +30,10 @@ final class RegistrarResultadoParada
 {
     public const RESULTADOS = ['entregado', 'rechazado', 'fallido'];
 
-    public function __construct(private readonly TransicionesPedido $transiciones) {}
+    public function __construct(
+        private readonly TransicionesPedido $transiciones,
+        private readonly CrearTicket $crearTicket,
+    ) {}
 
     public function __invoke(Despacho $despacho, int $idPedido, string $resultado, ?string $motivo, Usuario $actor): DespachoPedido
     {
@@ -88,16 +91,14 @@ final class RegistrarResultadoParada
 
         $cliente = $pedido->direccionDespacho->cliente;
 
-        Ticket::create([
-            'id_cliente' => $cliente->id_cliente,
-            'id_pedido' => $pedido->id_pedido,
-            'id_vendedor' => $cliente->id_vendedor,
-            'asunto' => "Carga rechazada en la entrega del pedido N.º {$pedido->id_pedido}",
-            'descripcion' => "El cliente rechazó la carga al recibir. Motivo registrado por logística: {$motivo}",
-            'categoria' => 'reclamo',
-            'prioridad' => 'alta',
-            'estado' => 'abierto',
-            'clasificado_por_ia' => false,
-        ]);
+        // Ticket ya clasificado por regla (API.md §1.4); T-021 no lo reclasifica.
+        ($this->crearTicket)(
+            $cliente,
+            "Carga rechazada en la entrega del pedido N.º {$pedido->id_pedido}",
+            "El cliente rechazó la carga al recibir. Motivo registrado por logística: {$motivo}",
+            $pedido,
+            categoria: 'reclamo',
+            prioridad: 'alta',
+        );
     }
 }

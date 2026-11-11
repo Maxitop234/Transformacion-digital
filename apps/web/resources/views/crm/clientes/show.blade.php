@@ -164,7 +164,7 @@
             <ul class="mt-2 divide-y divide-slate-100">
                 @forelse ($cliente->tickets as $ticket)
                     <li class="py-2">
-                        <strong>{{ $ticket->asunto }}</strong>
+                        <a href="{{ route('crm.tickets.show', $ticket->id_ticket) }}" class="font-semibold text-sky-700 hover:underline" data-ticket="{{ $ticket->id_ticket }}">{{ $ticket->asunto }}</a>
                         <span class="block text-xs text-slate-500">{{ str_replace('_', ' ', $ticket->categoria) }} · prioridad {{ $ticket->prioridad }} · {{ str_replace('_', ' ', $ticket->estado) }}</span>
                     </li>
                 @empty

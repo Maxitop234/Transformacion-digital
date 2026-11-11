@@ -37,6 +37,10 @@ Route::middleware(['auth', 'can:portal.comprar'])->group(function () {
     Route::get('/mis-direcciones', [Portal\DireccionController::class, 'index'])->name('portal.direcciones');
     Route::post('/mis-direcciones', [Portal\DireccionController::class, 'store'])->name('portal.direcciones.store');
     Route::patch('/mis-direcciones/{direccion}', [Portal\DireccionController::class, 'update'])->whereNumber('direccion')->name('portal.direcciones.update');
+
+    // Tickets (T-018): «Reportar un problema», opcionalmente sobre un pedido propio.
+    Route::get('/tickets', [Portal\TicketController::class, 'index'])->name('portal.tickets');
+    Route::post('/tickets', [Portal\TicketController::class, 'store'])->middleware('throttle:10,1')->name('portal.tickets.store');
 });
 
 // Sesión (clientes y personal).
@@ -85,11 +89,17 @@ Route::prefix('crm')->name('crm.')->middleware(['auth', 'rol:administrador,vende
         Route::post('/alertas/{alerta}/resolver', [Crm\AlertaController::class, 'resolver'])->whereNumber('alerta')->name('alertas.resolver');
     });
 
+    // Tickets (T-018): vendedor (su cartera) y administrador.
+    Route::middleware('can:tickets')->group(function () {
+        Route::get('/tickets', [Crm\TicketController::class, 'index'])->name('tickets');
+        Route::get('/tickets/{ticket}', [Crm\TicketController::class, 'show'])->whereNumber('ticket')->name('tickets.show');
+        Route::patch('/tickets/{ticket}', [Crm\TicketController::class, 'update'])->whereNumber('ticket')->name('tickets.update');
+    });
+
     // Secciones del menú que se construyen en tareas posteriores: ya tienen su
     // ruta y su control de acceso, para que el menú por rol sea real.
     foreach ([
         'oportunidades' => ['oportunidades', 'Pipeline de oportunidades', 'T-015'],
-        'tickets' => ['tickets', 'Tickets', 'T-018'],
     ] as $ruta => [$area, $titulo, $tarea]) {
         Route::view("/{$ruta}", 'crm.seccion-pendiente', ['titulo' => $titulo, 'tarea' => $tarea])
             ->middleware("can:{$area}")

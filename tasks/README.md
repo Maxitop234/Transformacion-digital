@@ -44,7 +44,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 | [T-015](T-015-pipeline-de-oportunidades/README.md) | Pipeline de oportunidades | T-014 | 2 |  | Pendiente |
 | [T-016](T-016-gestion-de-pedidos/README.md) | Gestión de pedidos en el CRM | T-011, T-013 | 2 | ● | Terminada |
 | [T-017](T-017-logistica-y-alertas/README.md) | Despachos, flota y alertas de frío | T-016 | 2, 3 |  | Terminada |
-| [T-018](T-018-tickets/README.md) | Tickets de requerimientos | T-012, T-014 | 2, 5 |  | Pendiente |
+| [T-018](T-018-tickets/README.md) | Tickets de requerimientos | T-012, T-014 | 2, 5 |  | Terminada |
 
 ## Fase 3 · IoT
 

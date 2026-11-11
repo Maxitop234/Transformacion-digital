@@ -36,12 +36,18 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] Un ticket nuevo nace `sin_clasificar` y con `clasificado_por_ia = false`.
-- [ ] El ticket aparece en la ficha del cliente y en el detalle del pedido.
-- [ ] Test: un cliente no puede crear un ticket sobre un pedido ajeno.
-- [ ] Cerrar un ticket registra `cerrado_en`.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] Un ticket nuevo nace `sin_clasificar` y con `clasificado_por_ia = false`.
+- [x] El ticket aparece en la ficha del cliente y en el detalle del pedido.
+- [x] Test: un cliente no puede crear un ticket sobre un pedido ajeno.
+- [x] Cerrar un ticket registra `cerrado_en`.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
-_Sin notas todavía. Registrar aquí decisiones, comandos útiles y pendientes al trabajar la tarea._
+- Tests en `apps/web/tests/Feature/Crm/TicketsTest.php` (`php artisan test --filter=TicketsTest`).
+- El ticket automático de carga rechazada (T-017) pasa ahora por `CrearTicket`, pero sigue naciendo `reclamo`/`alta`, como define API.md §1.4. Es la única excepción a «nace `sin_clasificar`».
+- **Para T-021:** escuchar `App\Events\TicketCreado` con un listener encolado, releer el ticket y clasificar solo si sigue `sin_clasificar`. Al guardar el resultado de la IA, poner `clasificado_por_ia = true`; si un ejecutivo lo reclasifica, `GestionarTicket` lo deja en `false`.
+- La categoría `calidad` del ejemplo de API.md §3.1 no está en el `CHECK` de la base. T-021 debe usar las categorías de DATA_MODEL.md o pasar por un cambio de modelo.
+- Un ticket cerrado es final (409). Resolver o cerrar exige categoría.
+- El vendedor solo puede tomar un ticket para sí; reasignar a otro lo hace el administrador.
+- Agregué `GET /tickets` (formulario e historial del cliente) y `GET /crm/tickets/{id}`, ya documentados en API.md.

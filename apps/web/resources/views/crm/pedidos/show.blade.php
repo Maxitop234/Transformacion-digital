@@ -138,7 +138,14 @@
                 <h2 class="font-medium">Tickets</h2>
                 <ul class="mt-2 space-y-1">
                     @forelse ($pedido->tickets as $ticket)
-                        <li>{{ $ticket->asunto }} <span class="text-xs text-slate-500">· {{ str_replace('_', ' ', $ticket->estado) }}</span></li>
+                        <li data-ticket="{{ $ticket->id_ticket }}">
+                            @can('tickets')
+                                <a href="{{ route('crm.tickets.show', $ticket->id_ticket) }}" class="text-sky-700 hover:underline">{{ $ticket->asunto }}</a>
+                            @else
+                                {{ $ticket->asunto }}
+                            @endcan
+                            <span class="text-xs text-slate-500">· {{ str_replace('_', ' ', $ticket->categoria) }} · {{ str_replace('_', ' ', $ticket->estado) }}</span>
+                        </li>
                     @empty
                         <li class="text-slate-500">Sin tickets.</li>
                     @endforelse

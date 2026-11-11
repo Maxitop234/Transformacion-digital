@@ -16,6 +16,18 @@ class Ticket extends Modelo
 
     protected $primaryKey = 'id_ticket';
 
+    // Valores permitidos (DATA_MODEL.md `ticket`, CHECK en la base).
+    public const SIN_CLASIFICAR = 'sin_clasificar';
+
+    /** Categorías que se asignan al clasificar (sin `sin_clasificar`). */
+    public const CATEGORIAS = ['consulta', 'reclamo', 'cambio_pedido', 'cotizacion', 'otro'];
+
+    public const PRIORIDADES = ['baja', 'media', 'alta'];
+
+    public const ESTADOS = ['abierto', 'en_proceso', 'resuelto', 'cerrado'];
+
+    public const CERRADO = 'cerrado';
+
     /** @var list<string> */
     protected $fillable = [
         'id_cliente',

@@ -50,6 +50,7 @@ class MisPedidosController extends Controller
             'lineaDeTiempo' => $seguimiento->lineaDeTiempo($pedido),
             'despachos' => $seguimiento->despachos($pedido),
             'puedeCancelar' => $seguimiento->puedeCancelar($pedido, $request->user()),
+            'tickets' => $pedido->tickets()->orderByDesc('creado_en')->get(['id_ticket', 'asunto', 'estado', 'creado_en']),
             'puedePagar' => ! $perfil->esB2B && $pedido->estadoPedido->nombre === EstadoPedido::PENDIENTE,
         ]);
     }

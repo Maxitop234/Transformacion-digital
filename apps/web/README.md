@@ -188,7 +188,15 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **Cancelar:** pasa por `TransicionesPedido` con el actor cliente (motivo obligatorio, se guarda como «Cancelado por el cliente: …»). Solo desde «Pendiente» o «Confirmado»; después, 409. Libera la reserva.
 - **Repetir** (`RepetirPedido`, solo B2B): llama a `Carritos::agregar` por cada línea, así que aplica el precio vigente (RN-01) y el ajuste al disponible (RN-04); lo que no se puede agregar vuelve como aviso.
 - **Puntos de entrega** (`App\Domain\Clientes\PuntosEntrega`): B2B agrega puntos y los activa o desactiva (no se borran: los pedidos los referencian). Siempre queda uno activo.
-- «Reportar un problema» aparece deshabilitado hasta T-018.
+- «Reportar un problema» crea un ticket ligado al pedido (T-018).
+
+## Tickets (T-018)
+
+- **`App\Domain\Crm\CrearTicket`**: único punto de creación (portal, rechazo de carga en `RegistrarResultadoParada` y, en T-021, el asistente). Nace `abierto`, `sin_clasificar`/`media` (salvo que una regla fije categoría y prioridad, como la carga rechazada: `reclamo`/`alta`), `clasificado_por_ia = false` y con el vendedor del cliente. Rechaza un pedido de otro cliente.
+- **Evento `App\Events\TicketCreado`** (`ShouldDispatchAfterCommit`, solo `idTicket`): aún no tiene listeners. T-021 le engancha la clasificación con IA en un listener encolado y debe saltarse los tickets que ya no están `sin_clasificar`.
+- **`GestionarTicket`**: clasificar, reasignar, cambiar estado y cerrar con bloqueo de fila. Ver las reglas en API.md §1.4.
+- **Controladores:** `Portal\TicketController` (`/tickets`, el formulario también está en el detalle del pedido) y `Crm\TicketController` (`/crm/tickets`, gate `tickets`). Todo con `visiblePara()` (RN-10).
+- Los tickets aparecen en la ficha del cliente, en el detalle del pedido del CRM y en el del portal.
 
 ## Panel del CRM (T-013)
 
