@@ -56,7 +56,7 @@ Leer antes de empezar:
 - **Supuestos a confirmar con el equipo:**
   - *Confirmado por el equipo (2026-11-10):* los **precios de lista son netos** (sin IVA); el precio bruto es neto + IVA (`IVA_PCT`) y es el que se cobra. Los pagos de la demo se calculan así. T-008/T-011 muestran ambos según corresponda.
   - *Confirmado (2026-11-10):* rangos de conservación de referencia, Congelado −25 a −18 °C, Refrigerado 0 a 5 °C, Cárnico fresco −1 a 4 °C; basta con que se distingan en la demo.
-  - Las listas institucionales cuestan 14 % y 10 % menos que la pública.
+  - *Confirmado (2026-11-10):* las listas institucionales («Hospitales y clínicas 2026», «Casinos y colegios 2026») cuestan 14 % y 10 % menos que la pública, parejo en todos los productos y redondeado a la decena. El modelo admite precios negociados por producto si más adelante se necesitan.
 - **Convención de `movimiento_inventario.cantidad`** documentada en `DATA_MODEL.md` (reserva/liberación sobre `stock_reservado`; ingreso/salida/merma/ajuste sobre `stock_disponible`). T-010/T-011 deben seguirla.
 - **Historial:** las fechas son relativas al momento de sembrar (8 semanas hacia atrás). Los pedidos de hoy quedan abiertos (pendientes o confirmados) y la entrega empieza al día hábil siguiente; para ver pedidos en preparación o en ruta durante una demo, conviene volver a sembrar esa mañana. Cada pedido del portal nace de un carrito `convertido`; cada rechazo por temperatura abre un ticket `reclamo`.
 - **Para T-019/T-020:** no se siembra telemetría (la genera el simulador). Dos camiones (`CAM-017`, `CAM-042`) quedan inactivos «en mantención».
