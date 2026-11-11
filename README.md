@@ -116,7 +116,7 @@ Ejemplo de instrucción a un agente: *«Implementa la tarea `tasks/T-010-carrito
 
 ## Puesta en marcha
 
-El entorno local con Docker Compose se construye en las tareas [T-001](tasks/T-001-bootstrap-laravel) y [T-002](tasks/T-002-entorno-local-docker). Hasta que estén terminadas, el repositorio contiene solo documentación y estructura. Cuando lo estén, el flujo será:
+La aplicación Laravel base ya existe ([T-001](tasks/T-001-bootstrap-laravel); comandos en [`apps/web/README.md`](apps/web/README.md)). El entorno local con Docker Compose se construye en [T-002](tasks/T-002-entorno-local-docker). Cuando esté listo, el flujo será:
 
 ```bash
 cp .env.example .env
