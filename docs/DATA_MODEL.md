@@ -242,7 +242,7 @@ Existe un usuario técnico `sistema` (sin acceso interactivo) para registrar cam
 | `id_pedido` | INT? | FK → `pedido` | Nulo en ingresos y ajustes |
 | `id_usuario` | INT | FK → `usuario` | Responsable (o `sistema`) |
 | `tipo` | VARCHAR(15) | | `ingreso`, `reserva`, `liberacion`, `salida`, `ajuste`, `merma` |
-| `cantidad` | NUMERIC(12,2) | | Positiva o negativa según el tipo (un `ajuste` puede restar); `CHECK <> 0` |
+| `cantidad` | NUMERIC(12,2) | | Positiva o negativa según el tipo; `CHECK <> 0`. Convención: `ingreso` suma y `salida`/`merma` restan a `stock_disponible`; `reserva` suma y `liberacion` resta a `stock_reservado`; `ajuste` corrige `stock_disponible` con su signo |
 | `fecha_hora` | TIMESTAMPTZ | | |
 
 Bitácora de solo inserción.

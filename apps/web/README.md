@@ -89,12 +89,41 @@ Para revisar el formato sin modificar archivos (lo que hace el CI): `vendor/bin/
 
 Los tests corren contra PostgreSQL + PostGIS en la base `cofrial_test` (`phpunit.xml` la fuerza, junto con el resto del entorno de test), así que necesitan el contenedor `db` levantado (`docker compose -f infra/docker/compose.dev.yml up -d db`) y `DB_HOST`, `DB_PORT`, `DB_USERNAME` y `DB_PASSWORD` apuntando a él. `EsquemaCoincideConDataModelTest` lee `docs/DATA_MODEL.md` y se salta si no está disponible (dentro del contenedor solo se monta `apps/web`). El flujo [`.github/workflows/web.yml`](../../.github/workflows/web.yml) corre formateo y tests en cada push que toque `apps/web`.
 
+## Datos semilla
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+| Seeder | Qué crea | Dónde corre |
+| --- | --- | --- |
+| `CatalogoSeeder` | Regiones y comunas de la macrozona sur, roles, tipos de cliente, 7 estados de pedido, 7 etapas del pipeline, categorías, rangos de conservación, lista «Público general» y el usuario técnico `sistema`. Idempotente | Todos los entornos. En producción: `php artisan db:seed --class=CatalogoSeeder` |
+| `DemoSeeder` (`database/seeders/Demo/`) | Equipo, 32 productos con tres listas de precios e inventario, 50 camiones y conductores, clientes B2C/B2B (una empresa pendiente de validación y dos prospectos) y unas 8 semanas de pedidos, despachos, oportunidades, interacciones y tickets | Solo fuera de producción (se niega a correr con `APP_ENV=production`). Si ya hay datos de demo no hace nada |
+
+Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Los RUT están en el rango 45.000.000–45.999.999, con dígito verificador válido; los correos usan dominios `.example` y los teléfonos el bloque `+56 9 5555`. Las fechas del historial son relativas al momento de sembrar.
+
+### Usuarios de demo
+
+**Solo para local y demo.** Todos usan la contraseña `cofrial-demo` (`DemoSeeder::CLAVE_DEMO`); nunca se siembran en producción.
+
+| Rol | Correo |
+| --- | --- |
+| Administrador | `admin@cofrial.example` |
+| Despachador | `despacho@cofrial.example` |
+| Vendedor | `vendedor1@cofrial.example`, `vendedor2@cofrial.example`, `vendedor3@cofrial.example` |
+| Cliente B2C | `camila.rojas@correo.example`, `benjamin.munoz@correo.example`, `isidora.contreras@correo.example`, `vicente.torres@correo.example`, `florencia.reyes@correo.example`, `joaquin.espinoza@correo.example` |
+| Cliente B2B | `compras@clinica-araucaria.example`, `compras@hospital-lagosur.example`, `compras@casino-cautin.example`, `compras@colegio-bosquenativo.example`, `compras@ribera.example` |
+| Cliente B2B pendiente de validación | `compras@volcanazul.example` |
+
+`sistema@cofrial.example` es el usuario técnico de los cambios automáticos: está inactivo y su contraseña es aleatoria.
+
 ## Configuración relevante
 
 - `DB_SSLMODE`: `prefer` en local, `require` (o `verify-full`) contra RDS.
 - `DB_CONNECT_TIMEOUT`: segundos antes de abandonar la conexión; mantiene `/health` por debajo del timeout del balanceador.
 - La zona horaria de la aplicación y de la sesión de PostgreSQL es `APP_TIMEZONE` (`America/Santiago`). Las columnas `TIMESTAMPTZ` guardan el instante absoluto (UTC), así que no hay ambigüedad al leerlas desde otros componentes.
 - Sesiones, caché, colas y modo mantenimiento usan la base (`database`); ninguno usa `file`.
+- Parámetros de negocio (pedido mínimo, minutos de reserva, horas de abandono del carrito, IVA) en `config/negocio.php`, leídos de `PEDIDO_MINIMO_B2C`, `PEDIDO_MINIMO_B2B`, `RESERVA_STOCK_MINUTOS_B2C`, `CARRITO_ABANDONO_HORAS` e `IVA_PCT`.
 
 ## Referencias
 

@@ -20,7 +20,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 | [T-001](T-001-bootstrap-laravel/README.md) | Aplicación Laravel base | — | 1, 2 | ● | Terminada |
 | [T-002](T-002-entorno-local-docker/README.md) | Entorno local con Docker Compose | T-001 | 1, 3 | ● | Terminada |
 | [T-003](T-003-esquema-base-de-datos/README.md) | Esquema de base de datos | T-001 | 2 | ● | Terminada |
-| [T-004](T-004-datos-semilla/README.md) | Catálogos y datos de demostración | T-003 | 2, 4 | ● | Pendiente |
+| [T-004](T-004-datos-semilla/README.md) | Catálogos y datos de demostración | T-003 | 2, 4 | ● | Terminada |
 | [T-005](T-005-roles-base-de-datos/README.md) | Roles de base de datos de mínimo privilegio | T-003 | 1 |  | Pendiente |
 | [T-006](T-006-autenticacion-y-roles/README.md) | Autenticación y control de acceso por rol | T-003, T-004 | 2 | ● | Pendiente |
 | [T-007](T-007-mantenedores-administracion/README.md) | Mantenedores de administración | T-006 | 2 |  | Pendiente |

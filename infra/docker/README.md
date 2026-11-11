@@ -61,7 +61,7 @@ Todos los comandos se ejecutan desde la raíz del repositorio.
    docker compose -f infra/docker/compose.dev.yml exec web php artisan migrate
    ```
 
-4. Siembra los datos de demostración (disponible a partir de [T-004](../../tasks/T-004-datos-semilla/README.md)):
+4. Siembra los catálogos y los datos de demostración (usuarios y contraseña de demo en [`apps/web/README.md`](../../apps/web/README.md#usuarios-de-demo)):
 
    ```bash
    docker compose -f infra/docker/compose.dev.yml exec web php artisan db:seed
