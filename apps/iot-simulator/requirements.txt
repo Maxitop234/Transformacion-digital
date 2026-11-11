@@ -1,0 +1,2 @@
+# Dependencias de ejecución del simulador (ADR-0014).
+psycopg[binary]==3.2.13

@@ -16,6 +16,20 @@ x-app: &app
     - ../../db:/var/www/db:ro
   restart: unless-stopped
 
+# Simulador IoT (T-019): cinco réplicas, una por grupo de 10 camiones. Se declaran
+# como servicios separados porque cada réplica necesita su IOT_GRUPO (con
+# `deploy.replicas` todas recibirían el mismo entorno y se solaparían).
+x-iot: &iot
+  build:
+    context: ../../apps/iot-simulator
+    target: runtime
+  image: cofrial/iot-simulator:dev
+  env_file: ../../.env
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+
 services:
   db:
     image: postgis/postgis:16-3.4
@@ -127,6 +141,26 @@ services:
       retries: 10
       start_period: 30s
     restart: unless-stopped
+
+  iot-1:
+    <<: *iot
+    environment: { IOT_GRUPO: "1" }
+
+  iot-2:
+    <<: *iot
+    environment: { IOT_GRUPO: "2" }
+
+  iot-3:
+    <<: *iot
+    environment: { IOT_GRUPO: "3" }
+
+  iot-4:
+    <<: *iot
+    environment: { IOT_GRUPO: "4" }
+
+  iot-5:
+    <<: *iot
+    environment: { IOT_GRUPO: "5" }
 
 volumes:
   db-data:

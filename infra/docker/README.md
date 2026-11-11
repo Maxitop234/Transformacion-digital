@@ -7,9 +7,10 @@ Dockerfiles y archivos Compose del sistema.
 | `web/Dockerfile` | Imagen PHP-FPM 8.4 con `pdo_pgsql`, `intl`, `zip` y `opcache` para Laravel (web y worker) | [T-002](../../tasks/T-002-entorno-local-docker/README.md) |
 | `nginx/` | Nginx: publica Laravel y deriva `/bi` a Grafana | T-002 |
 | `db/01-inicializar-dev.sh` | Inicialización local de la base: usuarios con [`db/roles.sql`](../../db/roles.sql), PostGIS, base de tests `cofrial_test` y base interna de Grafana | T-002, T-003, T-005 |
-| `compose.dev.yml` | Entorno local completo: base, web, nginx, worker, compilación de assets y Grafana (el simulador se agrega en T-019) | T-002, T-019 |
+| `compose.dev.yml` | Entorno local completo: base, web, nginx, worker, compilación de assets, Grafana y las cinco réplicas del simulador IoT | T-002, T-019 |
 | `compose.prod.yml` (por crear) | EC2 web: Nginx, aplicación, worker, planificador y Grafana | [T-024](../../tasks/T-024-despliegue-web-y-balanceador/README.md) |
-| `compose.iot.yml` (por crear) | Nodo IoT: cinco contenedores del simulador | [T-025](../../tasks/T-025-despliegue-nodo-iot/README.md) |
+| `compose.iot.yml` | Nodo IoT: cinco contenedores del simulador con solo las variables `IOT_*`; se despliega en [T-025](../../tasks/T-025-despliegue-nodo-iot/README.md) | [T-019](../../tasks/T-019-simulador-iot/README.md), T-025 |
+| [`../../apps/iot-simulator/Dockerfile`](../../apps/iot-simulator/Dockerfile) | Imagen Python 3.12 del simulador (`runtime`) y de sus tests (`test`) | T-019 |
 
 Todos los servicios usan reinicio automático (`restart: unless-stopped`), porque las instancias del laboratorio se detienen y vuelven a arrancar.
 
@@ -25,6 +26,7 @@ Todos los servicios usan reinicio automático (`restart: unless-stopped`), porqu
 | `assets` | `node:22.23.3-alpine` | Instala las dependencias de Node (`package-lock.json`) y compila CSS (Tailwind) y JS con Vite en `apps/web/public/build`; vuelve a compilar al editar vistas, CSS o JS | Existe `public/build/manifest.json` |
 | `nginx` | `nginx:1.30.5-alpine` | Publica la aplicación en `http://localhost:8080` y `/bi` | `/health` a través de Nginx |
 | `grafana` | `grafana/grafana:13.2.5` | Grafana OSS en `/bi`, con su estado en la base `grafana` | `/bi/api/health` |
+| `iot-1` … `iot-5` | `cofrial/iot-simulator:dev` | Simulador IoT: cada réplica escribe 10 camiones (`IOT_GRUPO` 1 a 5) cada 30 s como `iot_writer`. Ver [`apps/iot-simulator`](../../apps/iot-simulator/README.md) | — (reintenta solo si la base no responde) |
 
 Los puertos solo se abren en `127.0.0.1`: la aplicación en `8080` y PostgreSQL en `5432`. Si ya tienes algo en esos puertos, exporta `COFRIAL_WEB_PUERTO_LOCAL` o `COFRIAL_DB_PUERTO_LOCAL` antes de levantar.
 
@@ -99,6 +101,16 @@ docker compose -f infra/docker/compose.dev.yml exec db psql -U postgres -d cofri
 ```bash
 docker compose -f infra/docker/compose.dev.yml logs -f web worker
 ```
+
+```bash
+docker compose -f infra/docker/compose.dev.yml logs -f iot-1
+```
+
+```bash
+docker kill -s USR1 cofrial-iot-2-1
+```
+
+La última provoca una ruptura de frío en el grupo 2 para la demo ([`apps/iot-simulator`](../../apps/iot-simulator/README.md#provocar-una-ruptura-de-frío-demo)).
 
 ### Notas
 

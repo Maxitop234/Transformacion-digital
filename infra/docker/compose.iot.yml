@@ -1,0 +1,53 @@
+# Nodo IoT (ADR-0006): cinco contenedores del simulador, 10 camiones cada uno.
+# Solo recibe las credenciales de iot_writer; nada de la aplicación web.
+#   docker compose -f infra/docker/compose.iot.yml --env-file .env.iot up -d --build
+# `.env.iot` (ignorado por git) define IOT_DB_HOST, IOT_DB_PASSWORD y, si cambian,
+# las demás IOT_* (ver apps/iot-simulator/README.md). El despliegue en EC2 es T-025.
+name: cofrial-iot
+
+x-iot: &iot
+  build:
+    context: ../../apps/iot-simulator
+    target: runtime
+  image: cofrial/iot-simulator:latest
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+x-iot-env: &iot-env
+  IOT_DB_HOST: ${IOT_DB_HOST:?Falta IOT_DB_HOST (endpoint de RDS)}
+  IOT_DB_PORT: ${IOT_DB_PORT:-5432}
+  IOT_DB_DATABASE: ${IOT_DB_DATABASE:-cofrial}
+  IOT_DB_SSLMODE: ${IOT_DB_SSLMODE:-require}
+  IOT_DB_USERNAME: ${IOT_DB_USERNAME:-iot_writer}
+  IOT_DB_PASSWORD: ${IOT_DB_PASSWORD:?Falta IOT_DB_PASSWORD}
+  IOT_INTERVALO_SEGUNDOS: ${IOT_INTERVALO_SEGUNDOS:-30}
+  IOT_CAMIONES_POR_CONTENEDOR: ${IOT_CAMIONES_POR_CONTENEDOR:-10}
+  IOT_CONTENEDORES: ${IOT_CONTENEDORES:-5}
+  IOT_PROB_RUPTURA_FRIO: ${IOT_PROB_RUPTURA_FRIO:-0.02}
+  IOT_TEMP_MIN_DEFECTO: ${IOT_TEMP_MIN_DEFECTO:-0}
+  IOT_TEMP_MAX_DEFECTO: ${IOT_TEMP_MAX_DEFECTO:-5}
+  IOT_SEMILLA: ${IOT_SEMILLA:-}
+  IOT_FORZAR_RUPTURA: ${IOT_FORZAR_RUPTURA:-}
+
+services:
+  iot-1:
+    <<: *iot
+    environment: { <<: *iot-env, IOT_GRUPO: "1" }
+
+  iot-2:
+    <<: *iot
+    environment: { <<: *iot-env, IOT_GRUPO: "2" }
+
+  iot-3:
+    <<: *iot
+    environment: { <<: *iot-env, IOT_GRUPO: "3" }
+
+  iot-4:
+    <<: *iot
+    environment: { <<: *iot-env, IOT_GRUPO: "4" }
+
+  iot-5:
+    <<: *iot
+    environment: { <<: *iot-env, IOT_GRUPO: "5" }

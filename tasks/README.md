@@ -50,7 +50,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 
 | Tarea | Título | Depende de | Pauta | RC | Estado |
 | --- | --- | --- | --- | :-: | --- |
-| [T-019](T-019-simulador-iot/README.md) | Simulador de telemetría IoT | T-003, T-005 | 3 | ● | Pendiente |
+| [T-019](T-019-simulador-iot/README.md) | Simulador de telemetría IoT | T-003, T-005 | 3 | ● | Terminada |
 
 ## Fase 4 · BI e IA
 
