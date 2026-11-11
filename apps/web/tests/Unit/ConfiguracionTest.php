@@ -25,7 +25,7 @@ class ConfiguracionTest extends TestCase
     {
         // Sin estado en la instancia (ADR-0005): lo que se despliega y los
         // valores por defecto de config/ apuntan a la base, nunca a `file`.
-        foreach ([base_path('.env.example'), base_path('../../.env.example')] as $archivo) {
+        foreach ($this->archivosEnvExample() as $archivo) {
             $env = Dotenv::parse(file_get_contents($archivo));
 
             $this->assertSame('database', $env['SESSION_DRIVER'], $archivo);
@@ -38,5 +38,27 @@ class ConfiguracionTest extends TestCase
         $this->assertStringContainsString("env('CACHE_STORE', 'database')", file_get_contents(config_path('cache.php')));
         $this->assertStringContainsString("env('QUEUE_CONNECTION', 'database')", file_get_contents(config_path('queue.php')));
         $this->assertStringContainsString("env('APP_MAINTENANCE_DRIVER', 'cache')", file_get_contents(config_path('app.php')));
+    }
+
+    public function test_env_example_no_deja_comentarios_en_variables_vacias(): void
+    {
+        // Docker Compose toma `VAR=   # comentario` como valor; el comentario va arriba.
+        foreach ($this->archivosEnvExample() as $archivo) {
+            $this->assertDoesNotMatchRegularExpression('/^[A-Z_]+=[ \t]+#/m', file_get_contents($archivo), $archivo);
+        }
+    }
+
+    /**
+     * `.env.example` de apps/web y, si el repositorio completo está disponible
+     * (no dentro del contenedor, que solo monta apps/web), el de la raíz.
+     *
+     * @return list<string>
+     */
+    private function archivosEnvExample(): array
+    {
+        return array_values(array_filter(
+            [base_path('.env.example'), base_path('../../.env.example')],
+            'is_file',
+        ));
     }
 }
