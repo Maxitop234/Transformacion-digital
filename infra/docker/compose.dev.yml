@@ -68,6 +68,32 @@ services:
       web:
         condition: service_healthy
 
+  # Compila CSS (Tailwind) y JS con Vite en apps/web/public/build y los vuelve
+  # a compilar al cambiar vistas, CSS o JS. Las dependencias de Node se
+  # instalan en apps/web/node_modules (ignorado por git) desde package-lock.json.
+  assets:
+    image: node:22.23.3-alpine
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app
+    environment:
+      npm_config_cache: /tmp/npm
+    volumes:
+      - ../../apps/web:/app
+    command:
+      - sh
+      - -c
+      - >-
+        if [ ! -f node_modules/.package-lock.json ] || [ package-lock.json -nt node_modules/.package-lock.json ];
+        then npm ci --no-audit --no-fund; fi &&
+        exec npx vite build --watch
+    healthcheck:
+      test: ["CMD", "test", "-f", "public/build/manifest.json"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+    restart: unless-stopped
+
   nginx:
     image: nginx:1.30.5-alpine
     volumes:

@@ -7,7 +7,7 @@ Dockerfiles y archivos Compose del sistema.
 | `web/Dockerfile` | Imagen PHP-FPM 8.4 con `pdo_pgsql`, `intl`, `zip` y `opcache` para Laravel (web y worker) | [T-002](../../tasks/T-002-entorno-local-docker/README.md) |
 | `nginx/` | Nginx: publica Laravel y deriva `/bi` a Grafana | T-002 |
 | `db/01-inicializar-dev.sh` | Inicialización local de la base: usuarios con [`db/roles.sql`](../../db/roles.sql), PostGIS, base de tests `cofrial_test` y base interna de Grafana | T-002, T-003, T-005 |
-| `compose.dev.yml` | Entorno local completo: base, web, nginx, worker y Grafana (el simulador se agrega en T-019) | T-002, T-019 |
+| `compose.dev.yml` | Entorno local completo: base, web, nginx, worker, compilación de assets y Grafana (el simulador se agrega en T-019) | T-002, T-019 |
 | `compose.prod.yml` (por crear) | EC2 web: Nginx, aplicación, worker, planificador y Grafana | [T-024](../../tasks/T-024-despliegue-web-y-balanceador/README.md) |
 | `compose.iot.yml` (por crear) | Nodo IoT: cinco contenedores del simulador | [T-025](../../tasks/T-025-despliegue-nodo-iot/README.md) |
 
@@ -22,6 +22,7 @@ Todos los servicios usan reinicio automático (`restart: unless-stopped`), porqu
 | `db` | `postgis/postgis:16-3.4` | PostgreSQL 16 + PostGIS, mismo motor que RDS. Datos en el volumen `cofrial_db-data` | `pg_isready` |
 | `web` | `cofrial/web:dev` (este Dockerfile) | PHP-FPM con el código de `apps/web` montado | `/health` pedido a PHP-FPM: sano solo si llega a la base |
 | `worker` | `cofrial/web:dev` | `php artisan queue:work` (colas en la base) | — |
+| `assets` | `node:22.23.3-alpine` | Instala las dependencias de Node (`package-lock.json`) y compila CSS (Tailwind) y JS con Vite en `apps/web/public/build`; vuelve a compilar al editar vistas, CSS o JS | Existe `public/build/manifest.json` |
 | `nginx` | `nginx:1.30.5-alpine` | Publica la aplicación en `http://localhost:8080` y `/bi` | `/health` a través de Nginx |
 | `grafana` | `grafana/grafana:13.2.5` | Grafana OSS en `/bi`, con su estado en la base `grafana` | `/bi/api/health` |
 
@@ -106,6 +107,7 @@ docker compose -f infra/docker/compose.dev.yml logs -f web worker
 - La base `cofrial` pertenece a `postgres`, que migra; la aplicación usa `app_rw` con los mismos permisos que en RDS ([T-005](../../tasks/T-005-roles-base-de-datos/README.md)). Solo `cofrial_test` pertenece a `app_rw`, porque los tests recrean el esquema. Si tu volumen es anterior a T-005, recréalo con `down -v`.
 - `web` y `worker` corren con el UID/GID `1000` (o los de `UID`/`GID` si los exportas) para poder escribir en `apps/web/storage` sin cambiar permisos del código montado.
 - Si existe `apps/web/.env`, Laravel solo lo usa para variables que el contenedor no define; las del `.env` de la raíz siempre ganan.
+- `assets` corre `vite build --watch`: al guardar una vista Blade, CSS o JS recompila en ~1 s y basta con recargar la página (no hay recarga automática). En modo watch Tailwind conserva las clases que ya vio, así que una clase que quitas queda en el CSS hasta reiniciar el servicio (`docker compose -f infra/docker/compose.dev.yml restart assets`). `node_modules` y `public/build` viven en `apps/web` y están ignorados por git.
 - Nginx resuelve `web` y `grafana` con el DNS interno de Docker en cada petición, así que recrear un contenedor no deja la aplicación en 502.
 - Los tests (`php artisan test`) usan la base `cofrial_test`, también dentro del contenedor: `phpunit.xml` fuerza su entorno y nunca tocan la base de desarrollo `cofrial`. `db/01-inicializar-dev.sh` crea `cofrial_test` con PostGIS; si tu volumen es anterior a T-003, recréalo con `down -v`.
 - En local todos los servicios reciben el `.env` completo. En producción (T-024) cada servicio debe recibir solo sus credenciales.

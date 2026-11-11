@@ -93,6 +93,18 @@ vendor/bin/pint
 
 Para revisar el formato sin modificar archivos (lo que hace el CI): `vendor/bin/pint --test`.
 
+Estilos (Tailwind 4) y JS con Vite; en Docker los compila el servicio `assets`. Sin Docker (Node 22):
+
+```bash
+npm ci
+```
+
+```bash
+npm run build
+```
+
+Las vistas cargan los assets y las fuentes (`@fonts`, Instrument Sans servida desde `public/build`, sin pedirla a terceros) solo si existe `public/build/manifest.json`; sin compilar, las páginas funcionan pero sin estilos.
+
 Los tests corren contra PostgreSQL + PostGIS en la base `cofrial_test` (`phpunit.xml` la fuerza, junto con el resto del entorno de test), así que necesitan el contenedor `db` levantado (`docker compose -f infra/docker/compose.dev.yml up -d db`) y `DB_HOST`, `DB_PORT`, `DB_USERNAME` y `DB_PASSWORD` apuntando a él. `EsquemaCoincideConDataModelTest` lee `docs/DATA_MODEL.md` y se salta si no está disponible (dentro del contenedor solo se monta `apps/web`). El flujo [`.github/workflows/web.yml`](../../.github/workflows/web.yml) corre formateo y tests en cada push que toque `apps/web`.
 
 ## Datos semilla
