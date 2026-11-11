@@ -6,7 +6,7 @@ Dockerfiles y archivos Compose del sistema.
 | --- | --- | --- |
 | `web/Dockerfile` | Imagen PHP-FPM 8.4 con `pdo_pgsql`, `intl`, `zip` y `opcache` para Laravel (web y worker) | [T-002](../../tasks/T-002-entorno-local-docker/README.md) |
 | `nginx/` | Nginx: publica Laravel y deriva `/bi` a Grafana | T-002 |
-| `db/01-inicializar-dev.sh` | Inicialización local de la base: `app_rw`, PostGIS y base interna de Grafana | T-002 |
+| `db/01-inicializar-dev.sh` | Inicialización local de la base: `app_rw`, PostGIS, base de tests `cofrial_test` y base interna de Grafana | T-002, T-003 |
 | `compose.dev.yml` | Entorno local completo: base, web, nginx, worker y Grafana (el simulador se agrega en T-019) | T-002, T-019 |
 | `compose.prod.yml` (por crear) | EC2 web: Nginx, aplicación, worker, planificador y Grafana | [T-024](../../tasks/T-024-despliegue-web-y-balanceador/README.md) |
 | `compose.iot.yml` (por crear) | Nodo IoT: cinco contenedores del simulador | [T-025](../../tasks/T-025-despliegue-nodo-iot/README.md) |
@@ -103,5 +103,5 @@ docker compose -f infra/docker/compose.dev.yml logs -f web worker
 - `web` y `worker` corren con el UID/GID `1000` (o los de `UID`/`GID` si los exportas) para poder escribir en `apps/web/storage` sin cambiar permisos del código montado.
 - Si existe `apps/web/.env`, Laravel solo lo usa para variables que el contenedor no define; las del `.env` de la raíz siempre ganan.
 - Nginx resuelve `web` y `grafana` con el DNS interno de Docker en cada petición, así que recrear un contenedor no deja la aplicación en 502.
-- Los tests (`php artisan test`) siempre usan SQLite en memoria, también dentro del contenedor: `phpunit.xml` fuerza su entorno y nunca tocan la base de desarrollo.
+- Los tests (`php artisan test`) usan la base `cofrial_test`, también dentro del contenedor: `phpunit.xml` fuerza su entorno y nunca tocan la base de desarrollo `cofrial`. `db/01-inicializar-dev.sh` crea `cofrial_test` con PostGIS; si tu volumen es anterior a T-003, recréalo con `down -v`.
 - En local todos los servicios reciben el `.env` completo. En producción (T-024) cada servicio debe recibir solo sus credenciales.

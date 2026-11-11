@@ -31,7 +31,7 @@ Aplicación Laravel que contiene el portal B2B/B2C, el CRM, el worker de colas y
 | PHPUnit | 12.5.43 | `phpunit.xml` |
 | PostgreSQL | 16 con PostGIS (local: `postgis/postgis:16-3.4`) | ADR-0007 |
 
-Extensiones de PHP necesarias: `pdo_pgsql`, `mbstring`, `intl` y, para los tests, `pdo_sqlite`.
+Extensiones de PHP necesarias: `pdo_pgsql`, `mbstring` e `intl`.
 
 ## Estructura
 
@@ -41,7 +41,19 @@ app/Http/Controllers/{Portal,Crm}                       controladores delgados p
 app/Http/Controllers/HealthController.php               GET /health (routes/health.php, sin sesión)
 resources/views/layouts/{portal,crm}.blade.php          layouts base de cada superficie
 lang/es                                                 textos del framework en español
+app/Models                                              un modelo Eloquent por tabla del MER (34), sobre la base App\Models\Modelo
+app/Models/Concerns                                     TieneClaveCompuesta (PK de dos columnas) y SoloInsercion (historiales)
+database/migrations                                     una migración por tabla, en orden de dependencias (ADR-0016)
+tests/Feature/Esquema                                   tablas, restricciones, modelos y coincidencia con DATA_MODEL.md
 ```
+
+### Modelos
+
+- Cada modelo declara `$table`, `$primaryKey` y `$fillable`. Las PK numéricas son `GENERATED ALWAYS AS IDENTITY`: nunca se asigna un ID a mano.
+- Las tablas sin `created_at`/`updated_at` dejan las fechas de alta a la base (`DEFAULT now()`). `carrito` e `inventario` mantienen `actualizado_en` con los timestamps de Eloquent renombrados.
+- Clave compuesta (`detalle_pedido`, `item_carrito`, `detalle_lista_precio`, `despacho_pedido`): se buscan con `where()` sobre ambas columnas, no con `find()`.
+- `historial_estado_pedido`, `historial_etapa` y `movimiento_inventario` lanzan una excepción si se intenta actualizar o borrar una fila.
+- `Usuario` es el modelo de autenticación (`config/auth.php`), con la contraseña en `password_hash`.
 
 ## Comandos
 
@@ -75,7 +87,7 @@ vendor/bin/pint
 
 Para revisar el formato sin modificar archivos (lo que hace el CI): `vendor/bin/pint --test`.
 
-Los tests usan SQLite en memoria (`phpunit.xml`); no necesitan PostgreSQL. El flujo [`.github/workflows/web.yml`](../../.github/workflows/web.yml) corre formateo y tests en cada push que toque `apps/web`.
+Los tests corren contra PostgreSQL + PostGIS en la base `cofrial_test` (`phpunit.xml` la fuerza, junto con el resto del entorno de test), así que necesitan el contenedor `db` levantado (`docker compose -f infra/docker/compose.dev.yml up -d db`) y `DB_HOST`, `DB_PORT`, `DB_USERNAME` y `DB_PASSWORD` apuntando a él. `EsquemaCoincideConDataModelTest` lee `docs/DATA_MODEL.md` y se salta si no está disponible (dentro del contenedor solo se monta `apps/web`). El flujo [`.github/workflows/web.yml`](../../.github/workflows/web.yml) corre formateo y tests en cada push que toque `apps/web`.
 
 ## Configuración relevante
 
