@@ -65,7 +65,7 @@ Roles: `V` vendedor, `D` despachador, `A` administrador.
 | PATCH | `/crm/clientes/{id}/vendedor` | A | Reasigna la cartera | RN-10 |
 | POST | `/crm/clientes/{id}/contactos` | V A | Agrega un contacto | |
 | POST | `/crm/clientes/{id}/interacciones` | V A | Registra llamada, visita o correo | |
-| POST | `/crm/clientes/{id}/pedidos` | V A | Pedido telefónico con los mismos precios y reglas (`canal = telefono`) | RN-08 |
+| POST | `/crm/clientes/{id}/pedidos` | V A | Pedido telefónico con los mismos precios y reglas (`canal = crm`) | RN-08 |
 | GET | `/crm/oportunidades` | V A | Pipeline en columnas por etapa | RN-10 |
 | POST | `/crm/oportunidades` | V A | Crea una oportunidad | |
 | PATCH | `/crm/oportunidades/{id}/etapa` | V A | Mueve de etapa si se cumple la condición; exige motivo al perder | RN-09 |

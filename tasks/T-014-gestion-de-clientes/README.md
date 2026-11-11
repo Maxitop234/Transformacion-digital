@@ -29,7 +29,7 @@ Leer antes de empezar:
 - Ingreso manual de prospectos.
 - Validar una empresa: asigna lista de precios y vendedor, registra `fecha_validacion` y activa la cuenta.
 - Registrar interacciones, opcionalmente ligadas a una oportunidad.
-- Pedido telefónico: el vendedor compra a nombre del cliente con los mismos precios y reglas, con `canal = telefono` e `id_vendedor_registra`.
+- Pedido telefónico: el vendedor compra a nombre del cliente con los mismos precios y reglas, con `canal = crm` e `id_vendedor_registra` (RN-08).
 
 ## Fuera de alcance
 
