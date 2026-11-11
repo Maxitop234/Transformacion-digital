@@ -15,6 +15,7 @@
         <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
             <a href="{{ route('portal.inicio') }}" class="font-semibold">{{ config('app.name') }}</a>
             <div class="flex items-center gap-4 text-sm">
+                <a href="{{ route('portal.catalogo') }}" class="text-sky-700 hover:underline">Catálogo</a>
                 @auth
                     @can('crm')
                         <a href="{{ route('crm.inicio') }}" class="text-sky-700 hover:underline">CRM</a>

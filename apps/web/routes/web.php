@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Route;
 
 // Portal de ventas (clientes B2C y B2B).
 Route::get('/', Portal\InicioController::class)->name('portal.inicio');
+Route::get('/catalogo', [Portal\CatalogoController::class, 'index'])->name('portal.catalogo');
+Route::get('/productos/{sku}', [Portal\CatalogoController::class, 'show'])->name('portal.productos.show');
 
 // Sesión (clientes y personal).
 Route::middleware('guest')->group(function () {

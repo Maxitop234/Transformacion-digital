@@ -23,8 +23,8 @@ La aplicación es un monolito Laravel renderizado en el servidor. La mayoría de
 | --- | --- | --- |
 | GET | `/health` | `JSON`. Chequeo del balanceador: `200 {"status":"ok"}` si la aplicación responde y llega a la base; `503 {"status":"unavailable"}` si no (la conexión corta a los `DB_CONNECT_TIMEOUT` segundos). Sin autenticación, sin sesión, fuera del modo mantenimiento, sin datos sensibles |
 | GET | `/` | Portada del portal |
-| GET | `/catalogo` | Catálogo. Sin sesión muestra la lista «Público general». Filtros: `categoria`, `rango`, `disponible`, `q` |
-| GET | `/productos/{sku}` | Detalle de producto |
+| GET | `/catalogo` | Catálogo de productos activos, 24 por página. El precio sale de `App\Domain\Catalogo\Precios`: lista del cliente si su cuenta está activa y la lista vigente; si no (visitante, personal, empresa pendiente, lista vencida), «Público general». B2B ve precios netos; el resto, con IVA. Filtros combinables: `categoria` (id), `rango` (id), `disponible=1` (disponible para venta > 0), `q` (nombre o SKU, sin distinguir mayúsculas) |
+| GET | `/productos/{sku}` | Detalle de producto con conservación y disponible para venta. Un SKU inexistente o inactivo responde `404` |
 | GET, POST | `/login` | Inicio de sesión (clientes y equipo) |
 | POST | `/logout` | Cierre de sesión |
 | GET, POST | `/registro/persona` | Registro B2C: cuenta activa de inmediato |

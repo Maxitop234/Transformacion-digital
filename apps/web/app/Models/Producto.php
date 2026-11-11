@@ -67,4 +67,14 @@ class Producto extends Modelo
     {
         return $this->hasMany(MovimientoInventario::class, 'id_producto', 'id_producto');
     }
+
+    /** Disponible para venta = stock_disponible − stock_reservado (RN-04). */
+    public function disponibleParaVenta(): float
+    {
+        if ($this->inventario === null) {
+            return 0.0;
+        }
+
+        return max(0.0, round((float) $this->inventario->stock_disponible - (float) $this->inventario->stock_reservado, 2));
+    }
 }
