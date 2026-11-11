@@ -40,7 +40,7 @@ La aplicación es un monolito Laravel renderizado en el servidor. La mayoría de
 | PATCH | `/carrito/items/{sku}` | Fija la cantidad; si supera el disponible para venta se ajusta y avisa | RN-04 |
 | DELETE | `/carrito/items/{sku}` | Quita el producto | |
 | GET | `/checkout` | Punto de entrega activo con su ventana, fecha (desde el siguiente día hábil, lunes a sábado), forma de pago según el perfil y totales (neto, IVA, total). «Confirmar pedido» se deshabilita bajo el mínimo, con líneas sin precio o sobre el disponible | RN-03, RN-05, RN-06 |
-| POST | `/pedidos` | `{id_direccion, fecha_entrega_solicitada, orden_compra (B2B), observaciones?}`. Crea el pedido «Pendiente», copia el precio pactado, reserva stock y marca el carrito `convertido`. B2C → pasarela; B2B → pago `credito_30d` pendiente con la OC. Bajo el mínimo: 422. Sin stock: 409 (en HTML vuelve al carrito con el aviso) | RN-01, RN-03, RN-04, RN-05 |
+| POST | `/pedidos` | `{id_direccion, fecha_entrega_solicitada, orden_compra (B2B), observaciones?}`. Crea el pedido «Pendiente», copia el precio pactado, reserva stock y marca el carrito `convertido`. B2C → pasarela; B2B → pago `credito_30d` pendiente con la OC. Bajo el mínimo o con productos de distintos rangos de frío: 422. Sin stock: 409 (en HTML vuelve al carrito con el aviso) | RN-01, RN-03, RN-04, RN-05, RN-07 |
 | GET | `/pedidos/{id}/pago` | Pasarela simulada (solo B2C; B2B: 403; pedido ajeno: 404) | RN-05 |
 | POST | `/pedidos/{id}/pago` | Resultado simulado `{metodo: tarjeta \| transferencia, resultado: aprobado \| rechazado}`; aprobado confirma el pedido; rechazado permite reintentar. Pedido que ya no está «Pendiente» o con el plazo de 30 min vencido: 409 | RN-05 |
 | GET | `/mis-pedidos` | Historial del cliente (B2B: de toda la empresa) | |
@@ -66,7 +66,7 @@ Roles: `V` vendedor, `D` despachador, `A` administrador.
 | POST | `/crm/clientes/{id}/contactos` | V A | Agrega un contacto `{nombre, cargo?, email, telefono?, es_principal?}`; un nuevo principal reemplaza al anterior | |
 | POST | `/crm/clientes/{id}/interacciones` | V A | Registra `{tipo: llamada\|correo\|reunion\|visita\|mensaje, resumen, id_oportunidad?}` con fecha y vendedor (el del cliente si la registra un administrador) | |
 | GET | `/crm/clientes/{id}/pedidos/nuevo` | V A | Formulario del pedido telefónico con los precios de la lista del cliente | RN-08 |
-| POST | `/crm/clientes/{id}/pedidos` | V A | Pedido telefónico `{lineas[{id_producto, cantidad}], id_direccion, fecha_entrega_solicitada, orden_compra (B2B), observaciones?}` con `CrearPedido::telefonico()`: mismos precios, mínimo y reserva que el portal; `canal = crm` e `id_vendedor_registra`. Sin stock: 409 en JSON, en HTML vuelve con el error | RN-08 |
+| POST | `/crm/clientes/{id}/pedidos` | V A | Pedido telefónico `{lineas[{id_producto, cantidad}], id_direccion, fecha_entrega_solicitada, orden_compra (B2B), observaciones?}` con `CrearPedido::telefonico()`: mismos precios, mínimo, rango de frío único y reserva que el portal; `canal = crm` e `id_vendedor_registra`. Sin stock: 409 en JSON, en HTML vuelve con el error | RN-08 |
 | GET | `/crm/oportunidades` | V A | Pipeline en columnas por etapa | RN-10 |
 | POST | `/crm/oportunidades` | V A | Crea una oportunidad | |
 | PATCH | `/crm/oportunidades/{id}/etapa` | V A | Mueve de etapa si se cumple la condición; exige motivo al perder | RN-09 |

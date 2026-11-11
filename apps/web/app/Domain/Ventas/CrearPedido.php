@@ -33,6 +33,7 @@ use Illuminate\Validation\ValidationException;
  * - RN-05: B2B registra la orden de compra como pago `credito_30d`
  *   pendiente, a la espera del vendedor (T-016); B2C paga después en la
  *   pasarela simulada (`PagarPedido`).
+ * - RN-07: todos los productos del pedido comparten rango de conservación.
  * - RN-06: fecha de entrega desde el siguiente día hábil; la ventana es la
  *   del punto de entrega elegido.
  * - RN-09: escribe la fila «Pendiente» de `historial_estado_pedido`.
@@ -110,6 +111,28 @@ final class CrearPedido
         ));
     }
 
+    /**
+     * RN-07 · Un pedido lleva productos de un solo rango de conservación,
+     * porque cada despacho (una cámara de frío) lleva un solo rango y el
+     * pedido viaja completo en una parada. Devuelve el mensaje para el
+     * cliente si los rangos se mezclan; null si no.
+     *
+     * @param  iterable<string|null>  $nombresRango
+     */
+    public static function mensajeRangosMixtos(iterable $nombresRango): ?string
+    {
+        $rangos = collect($nombresRango)->filter()->unique()->sort()->values();
+
+        if ($rangos->count() <= 1) {
+            return null;
+        }
+
+        return sprintf(
+            'El pedido mezcla productos de distintos rangos de frío (%s). Cada camión lleva un solo rango: haz un pedido por cada uno.',
+            $rangos->implode(', '),
+        );
+    }
+
     /** Monto que se compara con el pedido mínimo según el perfil (RN-03). */
     public static function montoParaMinimo(PerfilPrecio $perfil, int $neto, int $total): int
     {
@@ -170,7 +193,14 @@ final class CrearPedido
         }
 
         // RN-01: precio de la lista vigente al momento de comprar.
-        $productos = Producto::whereIn('id_producto', array_keys($cantidades))->get()->keyBy('id_producto');
+        $productos = Producto::whereIn('id_producto', array_keys($cantidades))->with('rangoConservacion')->get()->keyBy('id_producto');
+
+        // RN-07: el camión tiene una sola cámara; un pedido que mezcla rangos no cabe en ningún despacho.
+        $mixto = self::mensajeRangosMixtos($productos->pluck('rangoConservacion.nombre')->all());
+
+        if ($mixto !== null) {
+            throw ValidationException::withMessages(['pedido' => $mixto]);
+        }
         $precios = $this->precios->precios(array_keys($cantidades), $perfil->lista);
         $lineas = [];
 

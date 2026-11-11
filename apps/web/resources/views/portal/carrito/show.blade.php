@@ -13,6 +13,9 @@
         <p class="mt-6 text-slate-600" data-carrito-vacio>Tu carrito está vacío.</p>
         <a href="{{ route('portal.catalogo') }}" class="mt-2 inline-block text-sky-700 hover:underline">Ir al catálogo</a>
     @else
+        @if ($mixto = $resumen->rangosMixtos())
+            <p class="mt-4 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900" role="alert" data-rangos-mixtos>{{ $mixto }}</p>
+        @endif
         <p class="mt-4 text-sm text-slate-600">
             Los precios se calculan con tu lista vigente cada vez que abres el carrito. Agregar productos no los reserva: el stock se reserva al confirmar el pedido.
         </p>

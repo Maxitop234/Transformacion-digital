@@ -47,6 +47,10 @@ class CheckoutController extends Controller
             }
         }
 
+        if ($mixto = $resumen->rangosMixtos()) {
+            $bloqueos[] = $mixto;
+        }
+
         if (CrearPedido::montoParaMinimo($perfil, $resumen->neto, $resumen->total) < $minimo) {
             $bloqueos[] = sprintf('El pedido mínimo es %s%s.', Precios::clp($minimo), $perfil->esB2B ? ' neto' : ' con IVA');
         }

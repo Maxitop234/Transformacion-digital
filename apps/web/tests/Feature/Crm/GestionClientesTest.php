@@ -18,6 +18,7 @@ use App\Models\Oportunidad;
 use App\Models\Pago;
 use App\Models\Pedido;
 use App\Models\Producto;
+use App\Models\RangoConservacion;
 use App\Models\Rol;
 use App\Models\Ticket;
 use App\Models\Usuario;
@@ -273,6 +274,21 @@ class GestionClientesTest extends TestCase
         $this->actingAs($this->ana)->post("/crm/clientes/{$pendiente->id_cliente}/pedidos", $this->pedidoTelefonico($pendiente, ['TST-001' => 2]))
             ->assertSessionHasErrors('pedido');
         $this->assertSame(0, Pedido::count());
+    }
+
+    public function test_rn07_el_pedido_telefonico_tampoco_mezcla_rangos_de_frio(): void
+    {
+        $this->productoVenta('TST-CON', convenio: 90000)->update(['id_rango' => RangoConservacion::where('nombre', 'Congelado')->value('id_rango')]);
+        $this->productoVenta('TST-REF', convenio: 90000)->update(['id_rango' => RangoConservacion::where('nombre', 'Refrigerado')->value('id_rango')]);
+        $cliente = $this->compradorCon('B2B', $this->ana)->cliente;
+
+        $this->actingAs($this->ana)->post("/crm/clientes/{$cliente->id_cliente}/pedidos", $this->pedidoTelefonico($cliente, ['TST-CON' => 1, 'TST-REF' => 1]))
+            ->assertSessionHasErrors(['pedido' => 'El pedido mezcla productos de distintos rangos de frío (Congelado, Refrigerado). Cada camión lleva un solo rango: haz un pedido por cada uno.']);
+        $this->assertSame(0, Pedido::count());
+
+        $this->actingAs($this->ana)->post("/crm/clientes/{$cliente->id_cliente}/pedidos", $this->pedidoTelefonico($cliente, ['TST-CON' => 2]))
+            ->assertSessionHasNoErrors();
+        $this->assertSame(1, Pedido::count());
     }
 
     // --- Apoyo ---------------------------------------------------------------

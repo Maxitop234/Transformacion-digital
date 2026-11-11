@@ -26,6 +26,12 @@ final readonly class ResumenCarrito
         return $this->lineas === [];
     }
 
+    /** Mensaje de RN-07 si el carrito mezcla rangos de frío; null si no. */
+    public function rangosMixtos(): ?string
+    {
+        return CrearPedido::mensajeRangosMixtos(array_map(fn (LineaCarrito $l) => $l->producto->rangoConservacion?->nombre, $this->lineas));
+    }
+
     public function cantidadProductos(): int
     {
         return count($this->lineas);

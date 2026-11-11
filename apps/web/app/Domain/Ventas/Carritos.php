@@ -108,7 +108,7 @@ final class Carritos
             return new ResumenCarrito(null, [], 0, 0, 0);
         }
 
-        $items = $carrito->itemsCarrito()->with('producto.inventario')->get()
+        $items = $carrito->itemsCarrito()->with(['producto.inventario', 'producto.rangoConservacion'])->get()
             ->sortBy(fn (ItemCarrito $item) => $item->producto->nombre)
             ->values();
         $precios = $this->precios->precios($items->pluck('id_producto'), $perfil->lista);

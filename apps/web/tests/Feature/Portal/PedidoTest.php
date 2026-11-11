@@ -14,6 +14,7 @@ use App\Models\Inventario;
 use App\Models\MovimientoInventario;
 use App\Models\Pago;
 use App\Models\Pedido;
+use App\Models\RangoConservacion;
 use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -402,6 +403,34 @@ class PedidoTest extends TestCase
         foreach ([Rol::ADMINISTRADOR, Rol::VENDEDOR, Rol::DESPACHADOR] as $rol) {
             $this->actingAs($this->usuario($rol))->get('/checkout')->assertForbidden();
         }
+    }
+
+    public function test_rn07_un_pedido_no_puede_mezclar_rangos_de_frio(): void
+    {
+        $congelado = $this->productoVenta('TST-CON', publico: 15000, nombre: 'Helado de prueba');
+        $congelado->update(['id_rango' => RangoConservacion::where('nombre', 'Congelado')->value('id_rango')]);
+        $refrigerado = $this->productoVenta('TST-REF', publico: 15000, nombre: 'Yogur de prueba');
+        $refrigerado->update(['id_rango' => RangoConservacion::where('nombre', 'Refrigerado')->value('id_rango')]);
+        $cliente = $this->compradorCon('B2C');
+        $this->alCarrito($cliente, 'TST-CON', 1);
+        $this->alCarrito($cliente, 'TST-REF', 1);
+        $mensaje = 'El pedido mezcla productos de distintos rangos de frío (Congelado, Refrigerado). Cada camión lleva un solo rango: haz un pedido por cada uno.';
+
+        // Se avisa en el carrito y el checkout no deja confirmar.
+        $this->actingAs($cliente)->get('/carrito')->assertOk()->assertSee('data-rangos-mixtos', false)->assertSee($mensaje);
+        $this->actingAs($cliente)->get('/checkout')->assertOk()->assertSee($mensaje)->assertSee('data-confirmar disabled', false);
+
+        // Y el servidor lo rechaza aunque se envíe igual.
+        $this->actingAs($cliente)->post('/pedidos', $this->datosCheckout($cliente))->assertSessionHasErrors(['pedido' => $mensaje]);
+        $this->assertSame(0, Pedido::count());
+        $this->assertSame('0.00', (string) Inventario::find($congelado->id_producto)->stock_reservado);
+
+        // Con un solo rango, el pedido pasa.
+        $this->actingAs($cliente)->delete('/carrito/items/TST-REF');
+        $this->alCarrito($cliente, 'TST-CON', 1);
+        $this->actingAs($cliente)->get('/carrito')->assertDontSee('data-rangos-mixtos', false);
+        $this->actingAs($cliente)->post('/pedidos', $this->datosCheckout($cliente))->assertSessionHasNoErrors();
+        $this->assertSame(1, Pedido::count());
     }
 
     // --- Apoyo ---------------------------------------------------------------
