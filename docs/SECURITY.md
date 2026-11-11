@@ -47,12 +47,12 @@ Tres usuarios sobre el esquema de negocio, más uno para el estado interno de Gr
 
 | Usuario | Puede | No puede | Lo usa |
 | --- | --- | --- | --- |
-| `app_rw` | Leer y escribir el esquema de negocio | Crear o alterar tablas, administrar roles | Aplicación web y worker |
-| `iot_writer` | Insertar en `telemetria` y `alerta`; lectura mínima del umbral de frío | Leer clientes, pedidos o precios; actualizar o borrar | Contenedores del simulador |
+| `app_rw` | Leer y escribir el esquema de negocio | Crear o alterar tablas, administrar roles, modificar o borrar historiales, escribir telemetría | Aplicación web y worker |
+| `iot_writer` | Insertar en `telemetria` y `alerta`; leer la vista `iot_umbral_camion` | Leer clientes, pedidos o precios; actualizar o borrar | Contenedores del simulador |
 | `bi_reader` | `SELECT` sobre las vistas `bi_*` | Escribir; leer tablas con datos personales directamente | Grafana |
 | `grafana_rw` | Ser dueño de la base `grafana` (usuarios, dashboards y preferencias de Grafana, ADR-0010) | Conectarse a la base de negocio | Grafana (estado interno) |
 
-El usuario maestro de RDS se usa solo para crear roles y ejecutar migraciones, nunca desde la aplicación en ejecución.
+El usuario maestro de RDS se usa solo para crear roles y ejecutar migraciones (conexión `pgsql_admin`), nunca desde la aplicación en ejecución. Los permisos se aplican con [`db/roles.sql`](../db/roles.sql) y se comprueban con [`db/pruebas_permisos.sh`](../db/pruebas_permisos.sh) (detalle en [`db/README.md`](../db/README.md)).
 
 ## 6. Acceso a la aplicación
 

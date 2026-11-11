@@ -6,7 +6,7 @@ Dockerfiles y archivos Compose del sistema.
 | --- | --- | --- |
 | `web/Dockerfile` | Imagen PHP-FPM 8.4 con `pdo_pgsql`, `intl`, `zip` y `opcache` para Laravel (web y worker) | [T-002](../../tasks/T-002-entorno-local-docker/README.md) |
 | `nginx/` | Nginx: publica Laravel y deriva `/bi` a Grafana | T-002 |
-| `db/01-inicializar-dev.sh` | Inicialización local de la base: `app_rw`, PostGIS, base de tests `cofrial_test` y base interna de Grafana | T-002, T-003 |
+| `db/01-inicializar-dev.sh` | Inicialización local de la base: usuarios con [`db/roles.sql`](../../db/roles.sql), PostGIS, base de tests `cofrial_test` y base interna de Grafana | T-002, T-003, T-005 |
 | `compose.dev.yml` | Entorno local completo: base, web, nginx, worker y Grafana (el simulador se agrega en T-019) | T-002, T-019 |
 | `compose.prod.yml` (por crear) | EC2 web: Nginx, aplicación, worker, planificador y Grafana | [T-024](../../tasks/T-024-despliegue-web-y-balanceador/README.md) |
 | `compose.iot.yml` (por crear) | Nodo IoT: cinco contenedores del simulador | [T-025](../../tasks/T-025-despliegue-nodo-iot/README.md) |
@@ -55,10 +55,14 @@ Todos los comandos se ejecutan desde la raíz del repositorio.
    docker compose -f infra/docker/compose.dev.yml ps
    ```
 
-3. Las migraciones corren solas al arrancar `web` (`COFRIAL_MIGRAR=1`); el worker espera a que terminen. Para correrlas a mano después de agregar una nueva:
+3. Las migraciones corren solas al arrancar `web` (`COFRIAL_MIGRAR=1`), con el usuario maestro, y después se reaplican permisos y vistas de `db/` ([`db/README.md`](../../db/README.md)); el worker espera a que terminen. Para correrlas a mano después de agregar una nueva:
 
    ```bash
-   docker compose -f infra/docker/compose.dev.yml exec web php artisan migrate
+   docker compose -f infra/docker/compose.dev.yml exec web php artisan migrate --database=pgsql_admin
+   ```
+
+   ```bash
+   docker compose -f infra/docker/compose.dev.yml exec web sh /var/www/db/aplicar.sh
    ```
 
 4. Siembra los catálogos y los datos de demostración (usuarios y contraseña de demo en [`apps/web/README.md`](../../apps/web/README.md#usuarios-de-demo)):
@@ -99,7 +103,7 @@ docker compose -f infra/docker/compose.dev.yml logs -f web worker
 
 - Las variables salen del `.env` de la raíz (`env_file`); el contenedor `db` deriva `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB` de `DB_ADMIN_USERNAME`, `DB_ADMIN_PASSWORD` y `DB_DATABASE`.
 - `db/01-inicializar-dev.sh` solo corre con el volumen vacío. Si cambias contraseñas en `.env` después de la primera vez, recrea el volumen con `down -v`.
-- En local, `app_rw` es dueño de la base para poder migrar. Es un atajo de desarrollo: los permisos reales de `app_rw`, `iot_writer` y `bi_reader` se definen en [T-005](../../tasks/T-005-roles-base-de-datos/README.md).
+- La base `cofrial` pertenece a `postgres`, que migra; la aplicación usa `app_rw` con los mismos permisos que en RDS ([T-005](../../tasks/T-005-roles-base-de-datos/README.md)). Solo `cofrial_test` pertenece a `app_rw`, porque los tests recrean el esquema. Si tu volumen es anterior a T-005, recréalo con `down -v`.
 - `web` y `worker` corren con el UID/GID `1000` (o los de `UID`/`GID` si los exportas) para poder escribir en `apps/web/storage` sin cambiar permisos del código montado.
 - Si existe `apps/web/.env`, Laravel solo lo usa para variables que el contenedor no define; las del `.env` de la raíz siempre ganan.
 - Nginx resuelve `web` y `grafana` con el DNS interno de Docker en cada petición, así que recrear un contenedor no deja la aplicación en 502.

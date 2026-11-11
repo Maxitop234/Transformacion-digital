@@ -489,19 +489,19 @@ Además de las 34 tablas de negocio, Laravel crea sus propias tablas de soporte 
 
 | Rol | Permisos | Lo usa |
 | --- | --- | --- |
-| `app_rw` | Lectura y escritura sobre el esquema de negocio | Laravel (web y worker) |
-| `iot_writer` | `INSERT` en `telemetria` y `alerta`; lectura mínima para resolver el umbral (ver puntos abiertos) | Simulador IoT |
+| `app_rw` | Lectura y escritura sobre el esquema de negocio; sin `UPDATE`/`DELETE` en los historiales y sin escribir `telemetria` | Laravel (web y worker) |
+| `iot_writer` | `INSERT` en `telemetria` y `alerta`; `SELECT` en la vista `iot_umbral_camion` | Simulador IoT |
 | `bi_reader` | `SELECT` sobre las vistas `bi_*` | Grafana |
 | `grafana_rw` | Dueño de la base aparte `grafana`; sin acceso a la base de negocio | Grafana (estado interno) |
 
-Se crean con [`db/roles.sql`](../db) usando el usuario maestro. Las migraciones corren con un usuario propietario del esquema, no con `app_rw` en producción si se puede evitar.
+Se crean con [`db/roles.sql`](../db/roles.sql) usando el usuario maestro, que es además el dueño del esquema y corre las migraciones (`php artisan migrate --database=pgsql_admin`); `app_rw` no puede crear ni borrar tablas. Detalle y orden de aplicación en [`db/README.md`](../db/README.md).
 
 ## Puntos abiertos
 
 Decisiones del modelo que hay que cerrar al implementar. Regístralas en un ADR cuando se resuelvan.
 
 1. ~~**Particionamiento de `telemetria` frente a la FK de `alerta`.**~~ *Resuelto (2026-11-10):* no se particiona; índice `(camion_id, fecha_hora DESC)`. Ver [ADR-0017](ADR/0017-telemetria-sin-particionar.md).
-2. **Quién calcula el umbral de frío.** RN-07 dice que el umbral del viaje es el rango más exigente de la carga, pero `iot_writer` solo inserta. Recomendación: exponerle una vista de solo lectura `iot_umbral_camion (camion_id, temp_min_c, temp_max_c)` con el rango del despacho en ruta y un valor por defecto si el camión no tiene despacho.
+2. ~~**Quién calcula el umbral de frío.**~~ *Resuelto (T-005):* vista de solo lectura `iot_umbral_camion (camion_id, activo, temp_min_c, temp_max_c, alerta_ruptura_abierta)` en [`db/vistas_iot.sql`](../db/vistas_iot.sql). El rango es el más exigente de la carga del despacho `en_ruta` del camión (máximo de los mínimos, mínimo de los máximos) y es nulo si no tiene despacho en ruta: el simulador usa entonces su rango por defecto. `alerta_ruptura_abierta` evita repetir la alerta (punto 3).
 3. **Varias lecturas fuera de rango seguidas.** Para no crear una alerta cada 30 s, el simulador crea una alerta al iniciar el episodio y no repite mientras haya una alerta abierta de ese camión.
 4. **Coordenadas y PostGIS.** El MER guarda `lat`/`long` como columnas numéricas (exigidas por el enunciado). PostGIS queda disponible para consultas espaciales o columnas generadas, sin reemplazar esas columnas.
 5. **Conservación de la telemetría.** Al ser potencialmente dato personal (posición de un conductor identificable), definir un plazo de retención (propuesta: 90 días de detalle) y un trabajo de purga.

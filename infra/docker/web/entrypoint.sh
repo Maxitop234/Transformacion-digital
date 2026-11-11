@@ -26,8 +26,11 @@ fi
 
 # 3. Migraciones (solo `web`, COFRIAL_MIGRAR=1): en local la base queda al día
 #    sola, y el worker no arranca hasta que existan las tablas de colas y caché.
+#    Migra el usuario maestro (dueño del esquema) y después se reaplican los
+#    permisos y vistas de db/ (T-005), igual que en RDS.
 if [ "${COFRIAL_MIGRAR:-0}" = "1" ]; then
-    php artisan migrate --force --no-interaction
+    php artisan migrate --database=pgsql_admin --force --no-interaction
+    sh /var/www/db/aplicar.sh
 fi
 
 exec "$@"

@@ -106,6 +106,25 @@ return [
             ] : [],
         ],
 
+        // Usuario maestro: dueño del esquema. Solo para migraciones
+        // (`php artisan migrate --database=pgsql_admin`), nunca en ejecución
+        // (docs/SECURITY.md §5). La aplicación usa `pgsql` con app_rw.
+        'pgsql_admin' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_ADMIN_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'cofrial'),
+            'username' => env('DB_ADMIN_USERNAME', 'postgres'),
+            'password' => env('DB_ADMIN_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'timezone' => env('APP_TIMEZONE', 'America/Santiago'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

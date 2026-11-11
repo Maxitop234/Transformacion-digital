@@ -5,7 +5,7 @@ FROM php:8.4.26-fpm-bookworm
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        libpq-dev libicu-dev libzip-dev unzip git libfcgi-bin \
+        libpq-dev libicu-dev libzip-dev unzip git libfcgi-bin postgresql-client \
     && docker-php-ext-install -j2 pdo_pgsql pgsql intl zip opcache \
     && rm -rf /var/lib/apt/lists/*
 

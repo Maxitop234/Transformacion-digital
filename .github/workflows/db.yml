@@ -1,0 +1,98 @@
+name: db
+
+# Roles y permisos de base (T-005): aplica db/ sobre una base limpia, migra con
+# el usuario maestro y comprueba los permisos de cada usuario.
+on:
+  push:
+    paths:
+      - "db/**"
+      - "apps/web/database/**"
+      - "apps/web/config/database.php"
+      - ".github/workflows/db.yml"
+  pull_request:
+    paths:
+      - "db/**"
+      - "apps/web/database/**"
+      - "apps/web/config/database.php"
+      - ".github/workflows/db.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  permisos:
+    name: Roles y permisos
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-maestro
+          POSTGRES_DB: cofrial
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cofrial"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      APP_ENV: local
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_DATABASE: cofrial
+      DB_SSLMODE: disable
+      DB_ADMIN_USERNAME: postgres
+      DB_ADMIN_PASSWORD: ci-maestro
+      DB_USERNAME: app_rw
+      DB_PASSWORD: ci-app
+      IOT_DB_USERNAME: iot_writer
+      IOT_DB_PASSWORD: ci-iot
+      BI_DB_USERNAME: bi_reader
+      BI_DB_PASSWORD: ci-bi
+      GF_DATABASE_USER: grafana_rw
+      GF_DATABASE_NAME: grafana
+      GF_DATABASE_PASSWORD: ci-grafana
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, intl, pdo_pgsql
+          coverage: none
+          tools: composer:v2
+
+      - name: Instalar dependencias
+        working-directory: apps/web
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Roles antes de migrar (base vacía)
+        run: sh db/aplicar.sh
+
+      - name: Migrar con el usuario maestro
+        working-directory: apps/web
+        run: |
+          psql "postgresql://postgres:ci-maestro@127.0.0.1/cofrial" -c "create extension if not exists postgis"
+          php artisan migrate --database=pgsql_admin --force
+
+      - name: Permisos y vistas después de migrar (dos veces)
+        run: |
+          sh db/aplicar.sh
+          sh db/aplicar.sh
+
+      - name: Sembrar como app_rw
+        working-directory: apps/web
+        run: php artisan db:seed --force
+
+      - name: Comprobar permisos
+        run: sh db/pruebas_permisos.sh

@@ -151,7 +151,8 @@ VALUES (:id_telemetria, 'ruptura_frio', 'alta', 'abierta');
 
 ### 2.3 Comportamiento
 
-- Rango aplicable: el del despacho en ruta del camión; si no tiene, un rango por defecto configurable.
+- Rango aplicable: el del despacho en ruta del camión, leído de la vista `iot_umbral_camion` (`temp_min_c`, `temp_max_c`; ver [`db/vistas_iot.sql`](../db/vistas_iot.sql)); si es nulo, un rango por defecto configurable. La misma vista indica en `alerta_ruptura_abierta` si ya hay una alerta abierta para ese camión.
+- `iot_writer` solo puede insertar en `telemetria` y `alerta` y leer esa vista; para obtener `id_telemetria` usa `RETURNING`.
 - Ante un error de conexión, reintenta con espera creciente y sigue; no termina el proceso.
 - Registra en la salida estándar cada lote insertado, para poder mostrarlo con `docker logs` en la defensa.
 

@@ -67,11 +67,13 @@ composer install
 cp .env.example .env && php artisan key:generate
 ```
 
-Ajusta `DB_HOST`, `DB_PORT`, `DB_USERNAME` y `DB_PASSWORD` en `.env` según tu PostgreSQL local. Para levantar todo con Docker (base, web, worker, Nginx y Grafana) sigue [`infra/docker/README.md`](../../infra/docker/README.md). Sin Docker:
+Ajusta `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` y `DB_ADMIN_*` en `.env` según tu PostgreSQL local. Para levantar todo con Docker (base, web, worker, Nginx y Grafana) sigue [`infra/docker/README.md`](../../infra/docker/README.md). Sin Docker:
 
 ```bash
-php artisan migrate
+php artisan migrate --database=pgsql_admin
 ```
+
+Las migraciones corren con el usuario maestro (conexión `pgsql_admin`), dueño del esquema; la aplicación usa `app_rw`, que no puede crear ni borrar tablas. Después de migrar se aplican los permisos con `db/aplicar.sh` ([`db/README.md`](../../db/README.md)).
 
 ```bash
 php artisan serve --port=8080
@@ -91,9 +93,17 @@ Los tests corren contra PostgreSQL + PostGIS en la base `cofrial_test` (`phpunit
 
 ## Datos semilla
 
+Para recrear la base con datos (el maestro borra y crea las tablas; luego se reaplican los permisos):
+
 ```bash
-php artisan migrate:fresh --seed
+php artisan migrate:fresh --database=pgsql_admin --seed
 ```
+
+```bash
+sh ../../db/aplicar.sh
+```
+
+En Docker: `docker compose -f infra/docker/compose.dev.yml exec web php artisan migrate:fresh --database=pgsql_admin --seed --force` seguido de `docker compose -f infra/docker/compose.dev.yml exec web sh /var/www/db/aplicar.sh`.
 
 | Seeder | Qué crea | Dónde corre |
 | --- | --- | --- |

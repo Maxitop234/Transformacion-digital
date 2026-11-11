@@ -13,6 +13,7 @@ x-app: &app
   user: "${UID:-1000}:${GID:-1000}"
   volumes:
     - ../../apps/web:/var/www/html
+    - ../../db:/var/www/db:ro
   restart: unless-stopped
 
 services:
@@ -32,6 +33,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./db:/docker-entrypoint-initdb.d:ro
+      - ../../db:/cofrial-db:ro
     ports:
       # Solo en el equipo local, para clientes como psql o DBeaver.
       - "127.0.0.1:${COFRIAL_DB_PUERTO_LOCAL:-5432}:5432"
