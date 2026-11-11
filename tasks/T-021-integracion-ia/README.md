@@ -40,18 +40,18 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] Un ticket creado en el portal queda clasificado por la IA en menos de un minuto, con una llamada real a la API.
+- [x] Un ticket creado en el portal queda clasificado por la IA en menos de un minuto, con una llamada real a la API.
 - [x] Test: el texto enviado no contiene RUT, correos ni teléfonos.
 - [x] Test: con la API caída, el ticket se crea igual y queda `sin_clasificar`.
 - [x] Test: una respuesta con una categoría fuera de lista se descarta.
 - [x] La clave de la API solo existe en `.env`.
 - [x] El asistente responde el estado de un pedido propio y no entrega datos de pedidos ajenos.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
 - Recortable: el asistente conversacional. La clasificación de tickets basta para la pauta.
-- **Pendiente para cerrar la tarea:** la verificación con una llamada real (primer criterio). Hace falta una clave gratuita de Groq (https://console.groq.com/keys) en `AI_API_KEY` del `.env` de la raíz. Después: reiniciar `web` y `worker`, crear un ticket desde `/tickets` y comprobar en `/crm/tickets` que queda clasificado «(IA)» en menos de un minuto. Hasta entonces la tarea sigue `En curso`.
+- **Verificado con la API real (2026-11-11, Groq `openai/gpt-oss-20b`):** un ticket creado desde `/tickets` sobre un pedido (descripción con teléfono) quedó `reclamo`/`alta` con `clasificado_por_ia = true` unos 5 segundos después de crearse; la llamada tomó 554 ms en el worker. En el asistente, «¿En qué estado va mi pedido 172?» respondió «Confirmado», que coincide con la base, y un pedido ajeno respondió «no existe entre sus pedidos». Para repetirlo: poner la clave en `AI_API_KEY` del `.env` de la raíz y luego `docker compose -f infra/docker/compose.dev.yml up -d web worker` (un `restart` no relee el `.env`).
 - Proveedor decidido y ADR-0015 cerrado (Aceptada): Groq `openai/gpt-oss-20b` con `json_schema` estricto, y Gemini de respaldo con `AI_PROVIDER=gemini`.
 - Tests en `apps/web/tests/Feature/Ia/IntegracionIaTest.php` (`php artisan test --filter=IntegracionIaTest`). Usan `ClienteIaFalso` o `Http::fake`, y `phpunit.xml` fuerza la clave vacía.
 - La clave no está en el repositorio: `.env` está en `.gitignore` y `git grep` no encuentra claves con formato de Groq ni de Gemini.

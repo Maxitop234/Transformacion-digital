@@ -15,7 +15,7 @@
         <form id="form-asistente" class="mt-4 flex gap-2" data-url="{{ route('portal.asistente.mensajes') }}">
             <label for="mensaje" class="sr-only">Tu consulta</label>
             <input id="mensaje" name="mensaje" maxlength="500" required autocomplete="off" placeholder="Ej.: ¿Cuándo llega mi pedido 1042?"
-                   class="flex-1 rounded border border-slate-300 px-3 py-2">
+                   class="min-w-0 flex-1 rounded border border-slate-300 px-3 py-2">
             <button class="rounded bg-sky-700 px-4 py-2 text-white hover:bg-sky-800 disabled:opacity-50">Enviar</button>
         </form>
     </div>

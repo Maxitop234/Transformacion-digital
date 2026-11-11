@@ -205,7 +205,7 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **Asistente:** `GET /asistente` y `POST /asistente/mensajes` (`Portal\AsistenteController` → `AsistentePortal`), con `throttle:asistente` por usuario.
 - **Datos personales:** `FiltroDatosPersonales` enmascara RUT, correos, teléfonos y nombres conocidos (RN-11).
 - **Tests:** `tests/Support/ClienteIaFalso` (se registra con `$this->app->instance(ClienteIa::class, …)`) y `Http::fake`. `phpunit.xml` fuerza `AI_API_KEY` vacía.
-- **Probar con la API real:** pon la clave en `AI_API_KEY` del `.env` de la raíz, reinicia `web` y `worker` y crea un ticket desde `/tickets`.
+- **Probar con la API real:** pon la clave en `AI_API_KEY` del `.env` de la raíz, recrea `web` y `worker` con `docker compose -f infra/docker/compose.dev.yml up -d web worker` (un `restart` no relee el `.env`) y crea un ticket desde `/tickets`.
 
 ## Panel del CRM (T-013)
 

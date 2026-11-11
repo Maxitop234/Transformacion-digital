@@ -12,9 +12,9 @@
 </head>
 <body class="min-h-screen bg-white text-slate-900" data-superficie="portal">
     <header class="border-b border-slate-200">
-        <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
             <a href="{{ route('portal.inicio') }}" class="font-semibold">{{ config('app.name') }}</a>
-            <div class="flex items-center gap-4 text-sm">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                 <a href="{{ route('portal.catalogo') }}" class="text-sky-700 hover:underline">Catálogo</a>
                 @auth
                     @can('portal.comprar')
@@ -27,7 +27,7 @@
                     @can('crm')
                         <a href="{{ route('crm.inicio') }}" class="text-sky-700 hover:underline">CRM</a>
                     @endcan
-                    <span class="text-slate-600">{{ auth()->user()->email }}</span>
+                    <span class="break-all text-slate-600">{{ auth()->user()->email }}</span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="text-sky-700 hover:underline">Cerrar sesión</button>
