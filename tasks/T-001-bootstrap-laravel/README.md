@@ -46,7 +46,7 @@ Leer antes de empezar:
 - [x] `php artisan test` pasa.
 - [x] `GET /health` responde 200 con la base arriba y 503 con la base detenida.
 - [x] No queda ningún driver `file` para sesiones, caché o colas.
-- [ ] El flujo de CI termina en verde.
+- [x] El flujo de CI termina en verde.
 - [x] `.env.example` de la raíz cubre todas las variables que la aplicación lee.
 - [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
@@ -62,4 +62,4 @@ Leer antes de empezar:
 - **Tests:** SQLite en memoria; T-003 decidirá si pasa a PostgreSQL cuando haya PostGIS.
 - **Pendiente para T-006:** `/crm` es hoy una página de muestra sin autenticación ni datos; T-006 debe protegerla.
 - **Fuera de alcance, anotado:** `FILESYSTEM_DISK=local` y los logs en `storage/logs` siguen en disco; los archivos subidos y los logs a CloudWatch se resuelven en las tareas que los necesiten (T-024/T-026).
-- **CI:** `.github/workflows/web.yml` (Pint `--test` + `php artisan test`, PHP 8.4). Simulado en un clon limpio con éxito; queda verificar la primera ejecución en GitHub.
+- **CI:** `.github/workflows/web.yml` (Pint `--test` + `php artisan test`, PHP 8.4). Primera ejecución en GitHub en verde (run 42938783901, commit `a4e3098`).

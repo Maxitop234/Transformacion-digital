@@ -17,7 +17,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 
 | Tarea | Título | Depende de | Pauta | RC | Estado |
 | --- | --- | --- | --- | :-: | --- |
-| [T-001](T-001-bootstrap-laravel/README.md) | Aplicación Laravel base | — | 1, 2 | ● | En curso |
+| [T-001](T-001-bootstrap-laravel/README.md) | Aplicación Laravel base | — | 1, 2 | ● | Terminada |
 | [T-002](T-002-entorno-local-docker/README.md) | Entorno local con Docker Compose | T-001 | 1, 3 | ● | Pendiente |
 | [T-003](T-003-esquema-base-de-datos/README.md) | Esquema de base de datos | T-001 | 2 | ● | Pendiente |
 | [T-004](T-004-datos-semilla/README.md) | Catálogos y datos de demostración | T-003 | 2, 4 | ● | Pendiente |
