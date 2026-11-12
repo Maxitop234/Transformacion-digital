@@ -30,5 +30,11 @@
 
             <button type="submit" class="w-full rounded bg-sky-700 px-4 py-2 font-medium text-white hover:bg-sky-800">Entrar</button>
         </form>
+
+        <p class="mt-6 text-sm text-slate-600" data-enlaces-registro>
+            ¿No tienes cuenta?
+            <a href="{{ route('registro.persona') }}" class="text-sky-700 hover:underline">Crear cuenta personal</a>
+            o <a href="{{ route('registro.empresa') }}" class="text-sky-700 hover:underline">registrar tu empresa</a>.
+        </p>
     </div>
 @endsection

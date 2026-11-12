@@ -34,6 +34,7 @@
                     </form>
                 @else
                     <a href="{{ route('login') }}" class="text-sky-700 hover:underline">Iniciar sesión</a>
+                    <a href="{{ route('registro.persona') }}" class="text-sky-700 hover:underline">Crear cuenta</a>
                 @endauth
             </div>
         </nav>

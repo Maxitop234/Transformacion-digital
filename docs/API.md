@@ -27,8 +27,8 @@ La aplicación es un monolito Laravel renderizado en el servidor. La mayoría de
 | GET | `/productos/{sku}` | Detalle de producto con conservación y disponible para venta. Un SKU inexistente o inactivo responde `404` |
 | GET, POST | `/login` | Inicio de sesión (clientes y equipo) |
 | POST | `/logout` | Cierre de sesión |
-| GET, POST | `/registro/persona` | Registro B2C: cuenta activa de inmediato |
-| GET, POST | `/registro/empresa` | Registro B2B: crea cliente pendiente, contacto principal, punto de entrega y oportunidad «Prospecto nuevo» (RN-02) |
+| GET, POST | `/registro/persona` | Registro B2C (solo sin sesión) `{nombre, email, password, password_confirmation, calle, id_comuna, referencia?, ventana_inicio?, ventana_fin?, consentimiento}`: `usuario`, `cliente` activo con «Público general» y `direccion_despacho` en una transacción; inicia la sesión. Correo repetido, contraseña débil (mínimo 8, letras y números) o sin consentimiento: vuelve con errores. 10 intentos por minuto |
+| GET, POST | `/registro/empresa` | Registro B2B (solo sin sesión) `{rut, razon_social, contacto_nombre, contacto_cargo?, contacto_telefono?, email, password, password_confirmation, alias?, calle, id_comuna, referencia?, ventana_inicio, ventana_fin, consentimiento}`. Crea el cliente `pendiente_validacion`, el contacto principal (con el correo de la cuenta), el punto de entrega con su ventana y la oportunidad «Prospecto nuevo» con origen `portal`, asignada al vendedor activo con menos clientes (RN-02). RUT con dígito verificador inválido o ya registrado: error en `rut`. Ve el catálogo, pero no compra hasta la validación |
 | — | `/bi/*` | Grafana, servido por Nginx detrás del mismo balanceador. Tiene su propio inicio de sesión |
 
 ### 1.3 Portal (roles `cliente_b2c`, `cliente_b2b`)

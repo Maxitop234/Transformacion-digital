@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegistroController;
 use App\Http\Controllers\Crm;
 use App\Http\Controllers\Crm\Admin;
 use App\Http\Controllers\Portal;
@@ -51,6 +52,12 @@ Route::middleware(['auth', 'can:portal.comprar'])->group(function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'mostrar'])->name('login');
     Route::post('/login', [LoginController::class, 'iniciar'])->middleware('throttle:login')->name('login.iniciar');
+
+    // Registro de clientes (T-009): persona activa de inmediato; empresa pendiente de validación (RN-02).
+    Route::get('/registro/persona', [RegistroController::class, 'persona'])->name('registro.persona');
+    Route::post('/registro/persona', [RegistroController::class, 'registrarPersona'])->middleware('throttle:10,1')->name('registro.persona.store');
+    Route::get('/registro/empresa', [RegistroController::class, 'empresa'])->name('registro.empresa');
+    Route::post('/registro/empresa', [RegistroController::class, 'registrarEmpresa'])->middleware('throttle:10,1')->name('registro.empresa.store');
 });
 Route::post('/logout', [LoginController::class, 'cerrar'])->middleware('auth')->name('logout');
 

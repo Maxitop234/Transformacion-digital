@@ -36,12 +36,17 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] Test: el registro B2C crea `usuario`, `cliente` y `direccion_despacho` en una sola transacción.
-- [ ] Test: el registro B2B crea además `contacto_cliente` principal y la oportunidad.
-- [ ] Un RUT con dígito verificador incorrecto o ya registrado se rechaza.
-- [ ] Una empresa recién registrada puede ver el catálogo pero no confirmar un pedido.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] Test: el registro B2C crea `usuario`, `cliente` y `direccion_despacho` en una sola transacción.
+- [x] Test: el registro B2B crea además `contacto_cliente` principal y la oportunidad.
+- [x] Un RUT con dígito verificador incorrecto o ya registrado se rechaza.
+- [x] Una empresa recién registrada puede ver el catálogo pero no confirmar un pedido.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
-_Sin notas todavía. Registrar aquí decisiones, comandos útiles y pendientes al trabajar la tarea._
+- Tests en `apps/web/tests/Feature/Portal/RegistroTest.php` (`php artisan test --filter=RegistroTest`). También lo recorrí en el navegador: una empresa ficticia, un RUT con dígito verificador malo (rechazado) y luego el correcto.
+- **Pendiente de decisión: guardar el consentimiento.** Hoy el formulario exige aceptar el tratamiento de datos (`accepted`), pero el modelo no tiene dónde registrar cuándo ni qué versión del texto se aceptó, y para la Ley 21.719 conviene poder demostrarlo. Propuesta: una columna `cliente.consentimiento_datos_en TIMESTAMPTZ` (o una tabla de consentimientos con la versión del texto). Es un cambio al modelo de datos, así que necesita aprobación del equipo y actualizar DATA_MODEL.md.
+- **Asignación de vendedor:** el activo con menos clientes en cartera (empata el más antiguo). Si no hay ninguno, la empresa queda sin vendedor ni oportunidad y la ve el administrador. El administrador puede reasignar desde la ficha.
+- El contacto principal B2B usa el mismo correo que la cuenta de acceso. El teléfono y el cargo son opcionales.
+- En la oportunidad, el `historial_etapa` inicial queda a nombre del usuario de la empresa, que es quien hizo el registro.
+- Una empresa pendiente ve el catálogo con «Público general» en neto (como toda empresa, T-008) y el botón «Agregar» deshabilitado.

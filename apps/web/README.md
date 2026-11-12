@@ -161,6 +161,13 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **Cartera (RN-10):** `Cliente::visiblePara($usuario)` (y lo mismo en `ContactoCliente`, `DireccionDespacho`, `Carrito`, `Oportunidad`, `Interaccion`, `Ticket` y `Pedido`, este último a través de su dirección) limita la consulta: el vendedor ve solo sus clientes, el cliente del portal solo a sí mismo y el administrador y el despachador todo. Un identificador ajeno responde 404. `ClientePolicy` decide las acciones sobre un cliente visible (por ejemplo, solo el administrador reasigna).
 - Las secciones del CRM que aún no existen (`/crm/oportunidades`, `/crm/pedidos`, `/crm/despachos`, …) ya tienen ruta y gate y muestran «se construye en T-0xx».
 
+## Registro de clientes (T-009)
+
+- **`App\Domain\Clientes\RegistrarCliente`**: `persona()` y `empresa()`, cada uno en una transacción. Persona: `usuario` (`cliente_b2c`) + `cliente` activo con «Público general» + dirección. Empresa: `usuario` (`cliente_b2b`) + `cliente` `pendiente_validacion` con RUT normalizado + contacto principal + punto de entrega con ventana + oportunidad «Prospecto nuevo» (`origen = portal`) con su `historial_etapa`.
+- **Asignación:** la empresa (cliente y oportunidad) va al vendedor activo con menos clientes en cartera; empata el de menor `id_vendedor`. Así aparece en «Empresas pendientes» de su panel. Sin vendedores activos queda sin asignar, la ve el administrador y no se crea oportunidad.
+- **Controlador** `Auth\RegistroController` (middleware `guest`, `throttle:10,1`): valida RUT (dígito verificador y unicidad sobre el normalizado), correo único sin distinguir mayúsculas, contraseña confirmada (mínimo 8, letras y números) y consentimiento obligatorio (`accepted`). Un choque con el índice único por registros simultáneos vuelve como error de validación. Al terminar inicia la sesión y lleva al catálogo.
+- El consentimiento se exige pero **no se guarda**: el modelo no tiene dónde (ver notas de T-009).
+
 ## Carrito (T-010)
 
 - **Servicio:** `App\Domain\Ventas\Carritos` (`agregar`, `cambiarCantidad`, `quitar`, `resumen`). Controlador delgado `Portal\CarritoController`; rutas `/carrito` y `/carrito/items[/{sku}]` con el gate `portal.comprar`.

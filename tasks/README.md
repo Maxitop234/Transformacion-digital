@@ -30,7 +30,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 | Tarea | Título | Depende de | Pauta | RC | Estado |
 | --- | --- | --- | --- | :-: | --- |
 | [T-008](T-008-catalogo-y-precios/README.md) | Catálogo con precios por lista | T-004, T-006 | 2 | ● | Terminada |
-| [T-009](T-009-registro-de-clientes/README.md) | Registro de clientes B2C y B2B | T-006 | 2 |  | Pendiente |
+| [T-009](T-009-registro-de-clientes/README.md) | Registro de clientes B2C y B2B | T-006 | 2 |  | Terminada |
 | [T-010](T-010-carrito/README.md) | Carrito de compras | T-008 | 2 | ● | Terminada |
 | [T-011](T-011-checkout-y-pedido/README.md) | Checkout, pedido y pago | T-010 | 2 | ● | Terminada |
 | [T-012](T-012-seguimiento-de-pedidos/README.md) | Seguimiento de pedidos en el portal | T-011 | 2 |  | Terminada |
