@@ -45,7 +45,7 @@ Leer antes de empezar:
 ## Notas
 
 - Tests en `apps/web/tests/Feature/Portal/RegistroTest.php` (`php artisan test --filter=RegistroTest`). También lo recorrí en el navegador: una empresa ficticia, un RUT con dígito verificador malo (rechazado) y luego el correcto.
-- **Pendiente de decisión: guardar el consentimiento.** Hoy el formulario exige aceptar el tratamiento de datos (`accepted`), pero el modelo no tiene dónde registrar cuándo ni qué versión del texto se aceptó, y para la Ley 21.719 conviene poder demostrarlo. Propuesta: una columna `cliente.consentimiento_datos_en TIMESTAMPTZ` (o una tabla de consentimientos con la versión del texto). Es un cambio al modelo de datos, así que necesita aprobación del equipo y actualizar DATA_MODEL.md.
+- **Consentimiento guardado** (aprobado por el equipo el 2026-11-11): la columna nueva `cliente.consentimiento_datos_en TIMESTAMPTZ?`, creada con la migración `2026_11_11_000100_add_consentimiento_datos_en_to_cliente_table`, guarda cuándo se aceptó. Queda nula en prospectos del CRM y en clientes anteriores al cambio. No guarda la versión del texto aceptado: si algún día cambia la redacción, convendría una tabla de consentimientos con versión.
 - **Asignación de vendedor:** el activo con menos clientes en cartera (empata el más antiguo). Si no hay ninguno, la empresa queda sin vendedor ni oportunidad y la ve el administrador. El administrador puede reasignar desde la ficha.
 - El contacto principal B2B usa el mismo correo que la cuenta de acceso. El teléfono y el cargo son opcionales.
 - En la oportunidad, el `historial_etapa` inicial queda a nombre del usuario de la empresa, que es quien hizo el registro.

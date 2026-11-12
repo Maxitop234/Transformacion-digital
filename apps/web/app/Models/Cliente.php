@@ -28,6 +28,7 @@ class Cliente extends Modelo
         'estado_cliente',
         'fecha_registro',
         'fecha_validacion',
+        'consentimiento_datos_en',
     ];
 
     protected function casts(): array
@@ -35,6 +36,7 @@ class Cliente extends Modelo
         return [
             'fecha_registro' => 'datetime',
             'fecha_validacion' => 'datetime',
+            'consentimiento_datos_en' => 'datetime',
         ];
     }
 

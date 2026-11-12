@@ -166,7 +166,7 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **`App\Domain\Clientes\RegistrarCliente`**: `persona()` y `empresa()`, cada uno en una transacción. Persona: `usuario` (`cliente_b2c`) + `cliente` activo con «Público general» + dirección. Empresa: `usuario` (`cliente_b2b`) + `cliente` `pendiente_validacion` con RUT normalizado + contacto principal + punto de entrega con ventana + oportunidad «Prospecto nuevo» (`origen = portal`) con su `historial_etapa`.
 - **Asignación:** la empresa (cliente y oportunidad) va al vendedor activo con menos clientes en cartera; empata el de menor `id_vendedor`. Así aparece en «Empresas pendientes» de su panel. Sin vendedores activos queda sin asignar, la ve el administrador y no se crea oportunidad.
 - **Controlador** `Auth\RegistroController` (middleware `guest`, `throttle:10,1`): valida RUT (dígito verificador y unicidad sobre el normalizado), correo único sin distinguir mayúsculas, contraseña confirmada (mínimo 8, letras y números) y consentimiento obligatorio (`accepted`). Un choque con el índice único por registros simultáneos vuelve como error de validación. Al terminar inicia la sesión y lleva al catálogo.
-- El consentimiento se exige pero **no se guarda**: el modelo no tiene dónde (ver notas de T-009).
+- **Consentimiento:** se exige y su fecha y hora quedan en `cliente.consentimiento_datos_en` (nulo en prospectos del CRM y en clientes anteriores al cambio).
 
 ## Carrito (T-010)
 

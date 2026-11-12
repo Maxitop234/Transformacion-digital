@@ -28,7 +28,8 @@ use Illuminate\Support\Str;
  *   Se asigna al vendedor activo con menos clientes en su cartera, para que la
  *   vea en su panel (RN-10) y ningún prospecto digital quede sin seguimiento.
  *
- * Todo ocurre en una sola transacción. El RUT llega ya validado (formato,
+ * Ambos guardan en `consentimiento_datos_en` cuándo se aceptó el tratamiento
+ * de datos personales. Todo ocurre en una sola transacción. El RUT llega ya validado (formato,
  * dígito verificador y unicidad) desde el controlador y se guarda normalizado.
  */
 final class RegistrarCliente
@@ -105,6 +106,8 @@ final class RegistrarCliente
             'nombre_razon_social' => $nombre,
             'estado_cliente' => $estado,
             'fecha_registro' => now(),
+            // El controlador ya exigió aceptar el tratamiento de datos (Ley 21.719).
+            'consentimiento_datos_en' => now(),
         ]);
     }
 

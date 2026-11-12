@@ -55,6 +55,8 @@ class RegistroTest extends TestCase
             $cliente->tipoCliente->codigo, $cliente->estado_cliente, $cliente->listaPrecio->nombre, $cliente->nombre_razon_social, $cliente->id_vendedor,
         ]);
 
+        $this->assertTrue($cliente->consentimiento_datos_en->diffInSeconds(now(), true) < 60, 'Se guarda cuándo aceptó el tratamiento de datos.');
+
         $direccion = DireccionDespacho::where('id_cliente', $cliente->id_cliente)->sole();
         $this->assertSame(['Calle Inventada 742', true], [$direccion->calle, $direccion->activa]);
         $this->assertSame(0, Oportunidad::count());
@@ -89,6 +91,7 @@ class RegistroTest extends TestCase
         $this->post('/registro/persona', $this->datosPersona(['password' => 'corta', 'password_confirmation' => 'corta']))->assertSessionHasErrors('password');
         $this->assertGuest();
         $this->assertSame(0, Usuario::where('email', 'paula.prueba@correo.example')->count());
+        $this->assertSame(0, Cliente::whereNotNull('consentimiento_datos_en')->count());
 
         $this->post('/registro/persona', $this->datosPersona())->assertRedirect('/catalogo');
         Auth::logout();
@@ -128,6 +131,8 @@ class RegistroTest extends TestCase
         $this->assertSame(['B2B', 'pendiente_validacion', $rut->normalizado(), $libre->vendedor->id_vendedor, null], [
             $cliente->tipoCliente->codigo, $cliente->estado_cliente, $cliente->rut, $cliente->id_vendedor, $cliente->fecha_validacion,
         ]);
+
+        $this->assertNotNull($cliente->consentimiento_datos_en);
 
         $contacto = ContactoCliente::where('id_cliente', $cliente->id_cliente)->sole();
         $this->assertSame(['Tomás Inventado', 'Jefe de compras', 'compras@empresa-ficticia.example', true], [$contacto->nombre, $contacto->cargo, $contacto->email, $contacto->es_principal]);

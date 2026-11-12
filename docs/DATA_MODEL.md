@@ -159,6 +159,7 @@ Existe un usuario técnico `sistema` (sin acceso interactivo) para registrar cam
 | `estado_cliente` | VARCHAR(25) | | `prospecto`, `pendiente_validacion`, `activo`, `inactivo`. B2B queda en `pendiente_validacion` hasta su aprobación comercial |
 | `fecha_registro` | TIMESTAMPTZ | | |
 | `fecha_validacion` | TIMESTAMPTZ? | | Se llena al validar una empresa (RN-02) |
+| `consentimiento_datos_en` | TIMESTAMPTZ? | | Cuándo el titular aceptó el tratamiento de sus datos al registrarse en el portal (Ley 21.719, SECURITY.md §1). Nulo en prospectos del CRM y en clientes anteriores a T-009 |
 
 ### `contacto_cliente`
 | Columna | Tipo | Clave | Descripción |

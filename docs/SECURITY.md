@@ -8,7 +8,7 @@ La Ley 21.719 de protección de datos personales (Chile) fue publicada el 13 de 
 
 | Exigencia | Cómo responde el sistema |
 | --- | --- |
-| Base de licitud para tratar datos personales | Consentimiento explícito en el registro; se guarda solo lo necesario para vender y despachar |
+| Base de licitud para tratar datos personales | Consentimiento explícito en el registro, con fecha y hora en `cliente.consentimiento_datos_en`; se guarda solo lo necesario para vender y despachar |
 | Medidas de seguridad técnicas y organizativas | Red privada, cifrado, roles y mínimo privilegio (secciones 3 a 6) |
 | Notificación de vulneraciones a la Agencia | Monitoreo y registro de cambios que permiten detectar y acotar un incidente (sección 8) |
 | Derechos de acceso, rectificación, supresión, oposición y portabilidad, con respuesta en 30 días | Los datos de un titular están en una sola base y se localizan por `cliente`; desactivar y anonimizar es posible sin perder la trazabilidad comercial |
