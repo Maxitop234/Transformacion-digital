@@ -1,0 +1,96 @@
+# EC2 web en AWS (T-024, ADR-0005): Nginx, aplicación, worker, planificador y
+# Grafana. Lo levanta infra/aws/arranque/web.sh desde /opt/cofrial:
+#   docker compose -f infra/docker/compose.prod.yml up -d --build
+# Las variables viven en /etc/cofrial (fuera del repositorio, permisos 600) y
+# cada servicio recibe solo las suyas (docs/SECURITY.md §7):
+#   app.env        aplicación Laravel con app_rw
+#   migracion.env  solo en la instancia que migra: usuario maestro y claves de
+#                  los roles que reaplica db/aplicar.sh
+#   grafana.env    Grafana con bi_reader y grafana_rw
+name: cofrial
+
+x-app: &app
+  build:
+    context: ../..
+    dockerfile: infra/docker/web/Dockerfile.prod
+    target: app
+  image: cofrial/web:prod
+  env_file:
+    - path: /etc/cofrial/app.env
+  restart: unless-stopped
+  logging: &logging
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  web:
+    <<: *app
+    env_file:
+      - path: /etc/cofrial/app.env
+      - path: /etc/cofrial/migracion.env
+        required: false
+    healthcheck:
+      test: ["CMD", "cofrial-healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # La instancia que migra crea las 34 tablas la primera vez.
+      start_period: 180s
+
+  worker:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=10", "--max-time=3600"]
+    depends_on:
+      web:
+        condition: service_healthy
+
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      web:
+        condition: service_healthy
+
+  nginx:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web/Dockerfile.prod
+      target: nginx
+    image: cofrial/nginx:prod
+    ports:
+      # Solo el balanceador llega a este puerto (sg-web).
+      - "80:80"
+    depends_on:
+      web:
+        condition: service_healthy
+      grafana:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging: *logging
+
+  grafana:
+    image: grafana/grafana:13.2.5
+    env_file:
+      - path: /etc/cofrial/grafana.env
+    environment:
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/cofrial-bi.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/etc/grafana/dashboards:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/bi/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    logging: *logging

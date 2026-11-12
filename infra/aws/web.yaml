@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Cofrial · Web (T-024). Dos EC2 t3.medium, una por zona, detrás de un
+  Application Load Balancer con HTTPS (certificado autofirmado en ACM) y
+  redirección desde HTTP. Diseño en docs/ARCHITECTURE.md §3.3 (ADR-0005).
+  Requiere los stacks cofrial-red y cofrial-datos, los secretos de
+  secretos.sh y el certificado de certificado.sh.
+
+Parameters:
+  Ami:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  TipoInstancia:
+    Type: String
+    Default: t3.medium
+  CertificadoArn:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cofrial/config/CERTIFICADO_ARN
+  Repositorio:
+    Type: String
+    Default: https://github.com/Maxitop234/Transformacion-digital.git
+  Rama:
+    Type: String
+    Default: main
+
+Resources:
+  # --- Balanceador -----------------------------------------------------------------
+
+  Balanceador:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: cofrial-alb
+      Type: application
+      Scheme: internet-facing
+      Subnets:
+        - !ImportValue cofrial-red-publica-a
+        - !ImportValue cofrial-red-publica-b
+      SecurityGroups:
+        - !ImportValue cofrial-red-sg-alb
+      LoadBalancerAttributes:
+        - { Key: routing.http.drop_invalid_header_fields.enabled, Value: 'true' }
+      Tags:
+        - { Key: Name, Value: cofrial-alb }
+
+  GrupoDestino:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: cofrial-web
+      VpcId: !ImportValue cofrial-red-vpc
+      Protocol: HTTP
+      Port: 80
+      TargetType: instance
+      # /health responde 200 solo si Laravel llega a la base (ARCHITECTURE.md §3.3).
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Matcher: { HttpCode: '200' }
+      TargetGroupAttributes:
+        - { Key: deregistration_delay.timeout_seconds, Value: '30' }
+      Targets:
+        - { Id: !Ref Web1 }
+        - { Id: !Ref Web2 }
+      Tags:
+        - { Key: Name, Value: cofrial-web }
+
+  OyenteHttps:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Balanceador
+      Protocol: HTTPS
+      Port: 443
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates:
+        - { CertificateArn: !Ref CertificadoArn }
+      DefaultActions:
+        - { Type: forward, TargetGroupArn: !Ref GrupoDestino }
+
+  OyenteHttp:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Balanceador
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig: { Protocol: HTTPS, Port: '443', StatusCode: HTTP_301 }
+
+  # --- EC2 web ----------------------------------------------------------------------
+  # El user data solo clona el repositorio y llama a infra/aws/arranque/web.sh,
+  # que también sirve para actualizar (infra/aws/desplegar.sh).
+
+  Web1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref Ami
+      InstanceType: !Ref TipoInstancia
+      SubnetId: !ImportValue cofrial-red-publica-a
+      SecurityGroupIds:
+        - !ImportValue cofrial-red-sg-web
+      # Perfil provisto por el laboratorio: no se pueden crear roles (ADR-0018).
+      IamInstanceProfile: LabInstanceProfile
+      KeyName: vockey
+      MetadataOptions: { HttpTokens: required, HttpPutResponseHopLimit: 1 }
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 30, VolumeType: gp3, Encrypted: true, DeleteOnTermination: true }
+      Tags:
+        - { Key: Name, Value: cofrial-web-1 }
+        - { Key: cofrial-rol, Value: web }
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+            set -euxo pipefail
+            exec > >(tee -a /var/log/cofrial-arranque.log) 2>&1
+            dnf install -y -q git
+            install -d -m 700 /etc/cofrial
+            cat > /etc/cofrial/despliegue.conf <<EOF
+            COFRIAL_DB_HOST=${Endpoint}
+            COFRIAL_URL=https://${Balanceador.DNSName}
+            COFRIAL_MIGRA=1
+            COFRIAL_RAMA=${Rama}
+            EOF
+            [ -d /opt/cofrial/.git ] || git clone --branch ${Rama} ${Repositorio} /opt/cofrial
+            /opt/cofrial/infra/aws/arranque/web.sh
+          - Endpoint: !ImportValue cofrial-datos-endpoint
+
+  Web2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref Ami
+      InstanceType: !Ref TipoInstancia
+      SubnetId: !ImportValue cofrial-red-publica-b
+      SecurityGroupIds:
+        - !ImportValue cofrial-red-sg-web
+      IamInstanceProfile: LabInstanceProfile
+      KeyName: vockey
+      MetadataOptions: { HttpTokens: required, HttpPutResponseHopLimit: 1 }
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 30, VolumeType: gp3, Encrypted: true, DeleteOnTermination: true }
+      Tags:
+        - { Key: Name, Value: cofrial-web-2 }
+        - { Key: cofrial-rol, Value: web }
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+            set -euxo pipefail
+            exec > >(tee -a /var/log/cofrial-arranque.log) 2>&1
+            dnf install -y -q git
+            install -d -m 700 /etc/cofrial
+            cat > /etc/cofrial/despliegue.conf <<EOF
+            COFRIAL_DB_HOST=${Endpoint}
+            COFRIAL_URL=https://${Balanceador.DNSName}
+            COFRIAL_MIGRA=0
+            COFRIAL_RAMA=${Rama}
+            EOF
+            [ -d /opt/cofrial/.git ] || git clone --branch ${Rama} ${Repositorio} /opt/cofrial
+            /opt/cofrial/infra/aws/arranque/web.sh
+          - Endpoint: !ImportValue cofrial-datos-endpoint
+
+Outputs:
+  Url:
+    Value: !Sub https://${Balanceador.DNSName}
+    Export: { Name: cofrial-web-url }
+  BalanceadorNombreCompleto:
+    Value: !GetAtt Balanceador.LoadBalancerFullName
+    Export: { Name: cofrial-web-alb }
+  GrupoDestinoNombreCompleto:
+    Value: !GetAtt GrupoDestino.TargetGroupFullName
+    Export: { Name: cofrial-web-tg }
+  Web1:
+    Value: !Ref Web1
+    Export: { Name: cofrial-web-1 }
+  Web2:
+    Value: !Ref Web2
+    Export: { Name: cofrial-web-2 }

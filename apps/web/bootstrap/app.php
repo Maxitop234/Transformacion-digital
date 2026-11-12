@@ -21,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // queda fuera para que una base caída responda 503 y no un error 500.
         $middleware->preventRequestsDuringMaintenance(except: ['health']);
 
+        // En AWS el HTTPS termina en el balanceador (T-024): se confía en sus
+        // cabeceras X-Forwarded-* para generar URLs https y reconocer la IP del
+        // cliente. Es seguro porque sg-web solo admite tráfico desde el ALB.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias(['rol' => ExigirRol::class]);
         $middleware->web(append: [CerrarSesionSiInactivo::class]);
 

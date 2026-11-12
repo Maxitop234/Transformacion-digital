@@ -1,5 +1,6 @@
 #!/bin/sh
-# Punto de entrada de los contenedores `web` y `worker` (desarrollo).
+# Punto de entrada de los contenedores `web`, `worker` y `scheduler`
+# (desarrollo con compose.dev.yml y producción con compose.prod.yml).
 set -eu
 
 cd /var/www/html
@@ -31,6 +32,12 @@ fi
 if [ "${COFRIAL_MIGRAR:-0}" = "1" ]; then
     php artisan migrate --database=pgsql_admin --force --no-interaction
     sh /var/www/db/aplicar.sh
+fi
+
+# 4. Producción (T-024): configuración, rutas, vistas y eventos en caché. Se
+#    hace al arrancar porque la configuración depende del entorno del contenedor.
+if [ "${APP_ENV:-}" = "production" ]; then
+    php artisan optimize --no-interaction
 fi
 
 exec "$@"

@@ -1,0 +1,26 @@
+# Contexto de Dockerfile.prod (raíz del repositorio): nada de secretos, ni
+# dependencias o compilados locales, que se regeneran dentro de la imagen.
+.git
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/node_modules
+apps/web/vendor
+apps/web/public/build
+apps/web/public/hot
+apps/web/storage/*.key
+apps/web/storage/logs/*
+apps/web/storage/framework/cache/*
+apps/web/storage/framework/sessions/*
+apps/web/storage/framework/testing/*
+apps/web/storage/framework/views/*
+apps/web/storage/framework/*.php
+apps/web/storage/framework/*.json
+apps/web/storage/framework/down
+apps/web/storage/framework/schedule-*
+apps/web/bootstrap/cache/*.php
+apps/web/.phpunit.result.cache
+apps/iot-simulator
+docs
+tasks
