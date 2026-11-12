@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Cofrial · Base de datos (T-023). RDS for PostgreSQL 16 Multi-AZ en la capa de
+  datos, sin acceso público, cifrada, con TLS obligatorio y respaldos de 7 días.
+  Diseño en docs/ARCHITECTURE.md §3.4 (ADR-0007, ADR-0009). Requiere el stack
+  cofrial-red y el parámetro /cofrial/prod/DB_ADMIN_PASSWORD (secretos.sh).
+
+Parameters:
+  MultiAz:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'true'
+    Description: Réplica síncrona en la otra zona (ADR-0007).
+  ClaseInstancia:
+    Type: String
+    Default: db.t3.micro
+
+Resources:
+  GrupoSubredes:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: cofrial-datos
+      DBSubnetGroupDescription: Subredes de datos sin ruta a internet (datos-a y datos-b)
+      SubnetIds:
+        - !ImportValue cofrial-red-datos-a
+        - !ImportValue cofrial-red-datos-b
+      Tags:
+        - { Key: Name, Value: cofrial-datos }
+
+  Parametros:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      DBParameterGroupName: cofrial-postgres16
+      Description: Cofrial - TLS obligatorio y zona horaria UTC
+      Family: postgres16
+      Parameters:
+        # Rechaza toda conexión sin TLS (SECURITY.md §4).
+        rds.force_ssl: '1'
+        timezone: UTC
+      Tags:
+        - { Key: Name, Value: cofrial-postgres16 }
+
+  Base:
+    Type: AWS::RDS::DBInstance
+    # Al borrar el stack queda un snapshot final: los datos no se pierden por error.
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: cofrial-db
+      Engine: postgres
+      EngineVersion: '16.15'
+      DBInstanceClass: !Ref ClaseInstancia
+      MultiAZ: !Ref MultiAz
+      AllocatedStorage: '20'
+      # El laboratorio solo admite gp2 en RDS.
+      StorageType: gp2
+      StorageEncrypted: true
+      DBName: cofrial
+      MasterUsername: cofrial_admin
+      MasterUserPassword: '{{resolve:ssm-secure:/cofrial/prod/DB_ADMIN_PASSWORD}}'
+      DBSubnetGroupName: !Ref GrupoSubredes
+      DBParameterGroupName: !Ref Parametros
+      VPCSecurityGroups:
+        - !ImportValue cofrial-red-sg-db
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 7
+      # 06:00-06:30 UTC = madrugada en Chile; mantención el domingo después.
+      PreferredBackupWindow: '06:00-06:30'
+      PreferredMaintenanceWindow: 'sun:07:00-sun:07:30'
+      CopyTagsToSnapshot: true
+      AutoMinorVersionUpgrade: true
+      # El laboratorio no admite monitoreo mejorado.
+      MonitoringInterval: 0
+      EnablePerformanceInsights: false
+      DeletionProtection: false
+      Tags:
+        - { Key: Name, Value: cofrial-db }
+
+Outputs:
+  Endpoint:
+    Value: !GetAtt Base.Endpoint.Address
+    Export: { Name: cofrial-datos-endpoint }
+  Puerto:
+    Value: !GetAtt Base.Endpoint.Port
+    Export: { Name: cofrial-datos-puerto }
+  Instancia:
+    Value: !Ref Base
+    Export: { Name: cofrial-datos-instancia }
