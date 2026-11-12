@@ -7,7 +7,7 @@
 @php($campo = 'mt-1 w-full rounded border border-slate-300 px-3 py-2')
 
 @section('contenido')
-    <div class="mx-auto max-w-xl">
+    <div class="mx-auto max-w-xl rounded border border-slate-200 bg-white p-6 sm:p-8">
         <h1 class="text-2xl font-semibold">{{ $empresa ? 'Registrar tu empresa' : 'Crear tu cuenta' }}</h1>
         <p class="mt-1 text-sm text-slate-600">
             @if ($empresa)

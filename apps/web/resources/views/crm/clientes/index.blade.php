@@ -53,7 +53,7 @@
                     <td class="py-2 pr-4"><a class="text-sky-700 hover:underline" href="{{ route('crm.clientes.show', $cliente->id_cliente) }}">{{ $cliente->nombre_razon_social }}</a></td>
                     <td class="py-2 pr-4 whitespace-nowrap">{{ $cliente->rut ? \App\Domain\Clientes\Rut::desdeTexto($cliente->rut)->formateado() : '—' }}</td>
                     <td class="py-2 pr-4">{{ $cliente->tipoCliente->codigo }}</td>
-                    <td class="py-2 pr-4">{{ str_replace('_', ' ', $cliente->estado_cliente) }}</td>
+                    <td class="py-2 pr-4"><x-insignia :valor="$cliente->estado_cliente" /></td>
                     <td class="py-2 pr-4">{{ $cliente->vendedor?->nombre ?? 'Sin asignar' }}</td>
                 </tr>
             @empty

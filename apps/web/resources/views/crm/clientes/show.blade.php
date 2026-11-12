@@ -149,7 +149,7 @@
                             <td class="py-1">{{ $pedido->id_pedido }}</td>
                             <td>{{ $pedido->fecha_pedido->setTimezone($zona)->format('d-m-Y') }}</td>
                             <td>{{ $pedido->canal === 'crm' ? 'CRM'.($pedido->vendedorRegistra ? ' ('.$pedido->vendedorRegistra->nombre.')' : '') : 'Portal' }}</td>
-                            <td>{{ $pedido->estadoPedido->nombre }}</td>
+                            <td><x-insignia :valor="$pedido->estadoPedido->nombre" /></td>
                             <td class="text-right">{{ $clp($pedido->totales['total']) }}</td>
                         </tr>
                     @empty

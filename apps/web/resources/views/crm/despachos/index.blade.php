@@ -77,7 +77,7 @@
                     <td class="py-2 pr-4">{{ $despacho->fecha_programada->format('d-m-Y') }}</td>
                     <td class="py-2 pr-4">{{ $despacho->camion_id }}</td>
                     <td class="py-2 pr-4">{{ $despacho->despachosPedido->count() }} ({{ $despacho->despachosPedido->where('estado_entrega', 'pendiente')->count() }} pendientes)</td>
-                    <td class="py-2 pr-4">{{ str_replace('_', ' ', $despacho->estado) }}</td>
+                    <td class="py-2 pr-4"><x-insignia :valor="$despacho->estado" /></td>
                 </tr>
             @empty
                 <tr><td colspan="5" class="py-4 text-slate-500">No hay despachos.</td></tr>

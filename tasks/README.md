@@ -74,6 +74,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 | Tarea | Título | Depende de | Pauta | RC | Estado |
 | --- | --- | --- | --- | :-: | --- |
 | [T-027](T-027-ensayo-de-defensa/README.md) | Ensayo integral y preparación de la defensa | T-020, T-021, T-024, T-025 | 5 | ● | Pendiente |
+| [T-028](T-028-pulido-visual/README.md) | Pulido visual e interacción de la interfaz | T-009, T-012, T-015, T-018, T-021 | 2 |  | Terminada |
 
 ## Dependencias
 

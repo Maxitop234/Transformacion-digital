@@ -19,7 +19,7 @@
                 · origen {{ $oportunidad->origen }} · {{ $oportunidad->vendedor?->nombre }}
             </p>
         </div>
-        <p class="rounded bg-slate-100 px-3 py-1 text-sm font-medium" data-etapa-actual>{{ $oportunidad->etapaPipeline->nombre }}</p>
+        <x-insignia :valor="$oportunidad->etapaPipeline->nombre" class="text-sm" data-etapa-actual />
     </div>
 
     <div class="mt-4">@include('crm.clientes._mensajes')</div>

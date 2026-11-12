@@ -3,7 +3,685 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* `dark:` sigue al conmutador de tema (data-theme en <html>), no solo al sistema. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Esquinas algo más suaves en toda la interfaz (`rounded`). */
+    --radius-sm: 0.5rem;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Tema (T-028)
+|--------------------------------------------------------------------------
+| Las vistas usan la paleta de Tailwind (slate, sky, emerald, amber, red).
+| El modo oscuro no reescribe cada vista: invierte esas escalas cambiando
+| sus variables, así `bg-white`, `text-slate-600` o `bg-sky-700 text-white`
+| siguen siendo correctos en ambos temas (el botón principal pasa a celeste
+| claro con texto oscuro). Los valores oscuros cumplen contraste AA sobre
+| `--color-white` (superficie) y `--color-slate-50` (fondo).
+*/
+:root {
+    color-scheme: light;
+
+    --acento: #0369a1;
+    --acento-suave: rgb(3 105 161 / 0.1);
+    --sombra-tarjeta: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.04);
+    --sombra-elevada: 0 10px 25px -8px rgb(15 23 42 / 0.18), 0 4px 10px -6px rgb(15 23 42 / 0.1);
+    --fila-resaltada: rgb(3 105 161 / 0.045);
+    --velo: rgb(15 23 42 / 0.45);
+
+    /* Tonos de las insignias de estado: texto, fondo y punto. */
+    --tono-neutro: #475569;
+    --tono-neutro-fondo: #f1f5f9;
+    --tono-info: #075985;
+    --tono-info-fondo: #e0f2fe;
+    --tono-progreso: #5b21b6;
+    --tono-progreso-fondo: #ede9fe;
+    --tono-exito: #166534;
+    --tono-exito-fondo: #dcfce7;
+    --tono-aviso: #92400e;
+    --tono-aviso-fondo: #fef3c7;
+    --tono-peligro: #991b1b;
+    --tono-peligro-fondo: #fee2e2;
+
+    /* Portada del portal. */
+    --portada-desde: #0c4a6e;
+    --portada-hasta: #0369a1;
+    --portada-brillo: rgb(125 211 252 / 0.35);
+}
+
+:root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --color-white: #111a2e;
+    --color-slate-50: #0a1120;
+    --color-slate-100: #1a2540;
+    --color-slate-200: #25314b;
+    --color-slate-300: #35435f;
+    --color-slate-400: #64748b;
+    --color-slate-500: #8b9ab1;
+    --color-slate-600: #a9b6c9;
+    --color-slate-700: #cbd5e1;
+    --color-slate-800: #e2e8f0;
+    --color-slate-900: #f1f5f9;
+    --color-slate-950: #f8fafc;
+
+    --color-sky-50: #0c2a3f;
+    --color-sky-100: #0f3550;
+    --color-sky-200: #124466;
+    --color-sky-300: #17618f;
+    --color-sky-600: #38bdf8;
+    --color-sky-700: #38bdf8;
+    --color-sky-800: #7dd3fc;
+    --color-sky-900: #bae6fd;
+
+    --color-emerald-50: #0a2e22;
+    --color-emerald-200: #0f4d38;
+    --color-emerald-700: #34d399;
+    --color-emerald-800: #6ee7b7;
+    --color-emerald-900: #a7f3d0;
+
+    --color-amber-50: #33240a;
+    --color-amber-200: #6b4a10;
+    --color-amber-300: #8a6114;
+    --color-amber-700: #fbbf24;
+    --color-amber-800: #fcd34d;
+    --color-amber-900: #fde68a;
+
+    --color-red-50: #3a1418;
+    --color-red-200: #6b1d24;
+    --color-red-300: #8f2630;
+    --color-red-700: #f87171;
+    --color-red-800: #fca5a5;
+    --color-red-900: #fecaca;
+
+    --acento: #38bdf8;
+    --acento-suave: rgb(56 189 248 / 0.14);
+    --sombra-tarjeta: 0 1px 2px rgb(0 0 0 / 0.35);
+    --sombra-elevada: 0 14px 30px -10px rgb(0 0 0 / 0.65), 0 4px 12px -6px rgb(0 0 0 / 0.5);
+    --fila-resaltada: rgb(56 189 248 / 0.06);
+    --velo: rgb(2 6 23 / 0.65);
+
+    --tono-neutro: #cbd5e1;
+    --tono-neutro-fondo: #1f2a44;
+    --tono-info: #7dd3fc;
+    --tono-info-fondo: #0f3550;
+    --tono-progreso: #c4b5fd;
+    --tono-progreso-fondo: #2e2456;
+    --tono-exito: #86efac;
+    --tono-exito-fondo: #0f3d2a;
+    --tono-aviso: #fcd34d;
+    --tono-aviso-fondo: #40300c;
+    --tono-peligro: #fca5a5;
+    --tono-peligro-fondo: #4a181d;
+
+    --portada-desde: #0b1730;
+    --portada-hasta: #0f3550;
+    --portada-brillo: rgb(56 189 248 / 0.22);
+}
+
+/* Transición suave entre páginas en navegadores que la soportan. */
+@view-transition {
+    navigation: auto;
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        transition:
+            background-color 0.2s ease,
+            color 0.2s ease;
+    }
+
+    h1 {
+        letter-spacing: -0.02em;
+    }
+
+    a,
+    button,
+    summary,
+    input,
+    select,
+    textarea {
+        transition:
+            color 0.15s ease,
+            background-color 0.15s ease,
+            border-color 0.15s ease,
+            box-shadow 0.15s ease,
+            transform 0.1s ease;
+    }
+
+    /* Foco visible y consistente para teclado. */
+    :focus-visible {
+        outline: 2px solid var(--acento);
+        outline-offset: 2px;
+    }
+
+    input:not([type='checkbox'], [type='radio'], [type='hidden']),
+    select,
+    textarea {
+        background-color: var(--color-white);
+    }
+
+    input:not([type='checkbox'], [type='radio']):focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        border-color: var(--acento);
+        box-shadow: 0 0 0 3px var(--acento-suave);
+    }
+
+    input[type='checkbox'],
+    input[type='radio'] {
+        accent-color: var(--acento);
+    }
+
+    button:not(:disabled),
+    summary {
+        cursor: pointer;
+    }
+
+    button:not(:disabled):active {
+        transform: scale(0.97);
+    }
+
+    /* Tablas: encabezados discretos y fila resaltada al pasar el puntero. */
+    thead th {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--color-slate-500);
+    }
+
+    /* Columnas contiguas no se tocan aunque la vista no les dé relleno. */
+    :where(th, td) + :where(th, td) {
+        padding-left: 0.75rem;
+    }
+
+    tbody tr {
+        transition: background-color 0.12s ease;
+    }
+
+    tbody tr:hover {
+        background-color: var(--fila-resaltada);
+    }
+
+    /* En pantallas angostas una tabla ancha se desplaza dentro de sí misma, no la página. */
+    @media (width < 64rem) {
+        main table {
+            display: block;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+    }
+
+    ::selection {
+        background-color: var(--acento-suave);
+    }
+}
+
+@layer components {
+    /* --- Superficies ------------------------------------------------------ */
+
+    /* Toda caja con borde y esquinas redondeadas dentro del contenido es una tarjeta. */
+    main :where(section, article, li, details, dl, ul, table, div)[class~='border'][class~='rounded'] {
+        box-shadow: var(--sombra-tarjeta);
+    }
+
+    /* En el portal el fondo es gris muy claro: las tarjetas sin color propio van sobre superficie. */
+    [data-superficie='portal'] main :where(section, article, li, details, dl, ul, table, div)[class~='border'][class~='rounded']:not([class*='bg-']) {
+        background-color: var(--color-white);
+    }
+
+    /* Tarjetas con enlace principal: se elevan al pasar el puntero. */
+    [data-sku],
+    [data-oportunidad],
+    .tarjeta-accion {
+        transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease,
+            border-color 0.15s ease;
+    }
+
+    [data-sku]:hover,
+    [data-oportunidad]:hover,
+    .tarjeta-accion:hover {
+        transform: translateY(-2px);
+        border-color: var(--acento);
+        box-shadow: var(--sombra-elevada);
+    }
+
+    /* Botón principal: más peso y una sombra que confirma que es la acción. */
+    :where(button, a)[class~='bg-sky-700'],
+    :where(button, a)[class~='bg-emerald-700'] {
+        font-weight: 500;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+    }
+
+    :where(button, a)[class~='bg-sky-700']:not(:disabled):hover,
+    :where(button, a)[class~='bg-emerald-700']:not(:disabled):hover {
+        box-shadow: 0 4px 12px -2px var(--acento-suave), 0 2px 4px rgb(0 0 0 / 0.12);
+    }
+
+    /* --- Insignias de estado (componente <x-insignia>) --------------------- */
+
+    .insignia {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 999px;
+        padding: 0.15rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1.25rem;
+        white-space: nowrap;
+        color: var(--tono-neutro);
+        background-color: var(--tono-neutro-fondo);
+    }
+
+    .insignia::before {
+        content: '';
+        width: 0.4rem;
+        height: 0.4rem;
+        border-radius: 999px;
+        background-color: currentColor;
+        flex: none;
+    }
+
+    .insignia[data-tono='info'] {
+        color: var(--tono-info);
+        background-color: var(--tono-info-fondo);
+    }
+
+    .insignia[data-tono='progreso'] {
+        color: var(--tono-progreso);
+        background-color: var(--tono-progreso-fondo);
+    }
+
+    .insignia[data-tono='exito'] {
+        color: var(--tono-exito);
+        background-color: var(--tono-exito-fondo);
+    }
+
+    .insignia[data-tono='aviso'] {
+        color: var(--tono-aviso);
+        background-color: var(--tono-aviso-fondo);
+    }
+
+    .insignia[data-tono='peligro'] {
+        color: var(--tono-peligro);
+        background-color: var(--tono-peligro-fondo);
+    }
+
+    /* En curso: el punto late para indicar que algo está pasando ahora. */
+    .insignia[data-vivo]::before {
+        animation: latido 1.6s ease-in-out infinite;
+    }
+
+    /* --- Mensajes de la última acción -------------------------------------- */
+
+    [data-estado],
+    [data-aviso],
+    [data-errores] {
+        border-left-width: 4px;
+        animation: entrar-desde-arriba 0.3s ease-out both;
+    }
+
+    /* --- Navegación --------------------------------------------------------- */
+
+    .cabecera {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background-color: color-mix(in oklab, var(--color-white) 82%, transparent);
+        backdrop-filter: saturate(1.4) blur(10px);
+    }
+
+    .marca {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
+    .marca-icono {
+        display: grid;
+        place-items: center;
+        width: 1.9rem;
+        height: 1.9rem;
+        border-radius: 0.6rem;
+        color: #fff;
+        background-image: linear-gradient(135deg, #0ea5e9, #0369a1);
+        box-shadow: 0 2px 6px rgb(3 105 161 / 0.4);
+    }
+
+    /* Enlace del menú del portal: subrayado que crece desde la izquierda. */
+    .enlace-menu {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.1rem;
+        color: var(--color-slate-600);
+    }
+
+    .enlace-menu::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        border-radius: 2px;
+        background-color: var(--acento);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.2s ease;
+    }
+
+    .enlace-menu:hover,
+    .enlace-menu[aria-current='page'] {
+        color: var(--color-slate-900);
+    }
+
+    .enlace-menu:hover::after,
+    .enlace-menu[aria-current='page']::after {
+        transform: scaleX(1);
+    }
+
+    /* Botón de icono (tema, menú). */
+    .boton-icono {
+        display: inline-grid;
+        place-items: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.6rem;
+        color: var(--color-slate-600);
+    }
+
+    .boton-icono:hover {
+        color: var(--color-slate-900);
+        background-color: var(--color-slate-100);
+    }
+
+    /* El conmutador muestra la luna en claro y el sol en oscuro. */
+    [data-tema-conmutar] .icono-sol,
+    :root[data-theme='dark'] [data-tema-conmutar] .icono-luna {
+        display: none;
+    }
+
+    :root[data-theme='dark'] [data-tema-conmutar] .icono-sol {
+        display: block;
+        animation: girar-entrada 0.35s ease-out;
+    }
+
+    [data-tema-conmutar] .icono-luna {
+        animation: girar-entrada 0.35s ease-out;
+    }
+
+    /* Menú desplegable (cuenta): aparece con escala y opacidad. */
+    .desplegable {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.5rem);
+        z-index: 40;
+        min-width: 14rem;
+        border: 1px solid var(--color-slate-200);
+        border-radius: 0.75rem;
+        padding: 0.4rem;
+        background-color: var(--color-white);
+        box-shadow: var(--sombra-elevada);
+        transform-origin: top right;
+        transition:
+            opacity 0.15s ease,
+            transform 0.15s ease,
+            visibility 0.15s;
+    }
+
+    .desplegable:not([data-abierto]) {
+        visibility: hidden;
+        opacity: 0;
+        transform: translateY(-4px) scale(0.97);
+        pointer-events: none;
+    }
+
+    .desplegable-item {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 0.6rem;
+        border-radius: 0.5rem;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        color: var(--color-slate-700);
+    }
+
+    .desplegable-item:hover {
+        color: var(--color-slate-900);
+        background-color: var(--color-slate-100);
+    }
+
+    /* Menú del portal en pantallas angostas: panel que se despliega. */
+    @media (width < 64rem) {
+        .menu-portal {
+            display: grid;
+            grid-template-rows: 0fr;
+            width: 100%;
+            transition: grid-template-rows 0.25s ease;
+        }
+
+        .menu-portal[data-abierto] {
+            grid-template-rows: 1fr;
+        }
+
+        .menu-portal > div {
+            overflow: hidden;
+        }
+    }
+
+    /* Barra lateral del CRM. */
+    .lateral-enlace {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        border-radius: 0.6rem;
+        padding: 0.5rem 0.65rem;
+        color: var(--color-slate-600);
+    }
+
+    .lateral-enlace:hover {
+        color: var(--color-slate-900);
+        background-color: var(--color-slate-100);
+    }
+
+    .lateral-enlace svg {
+        flex: none;
+        transition: transform 0.15s ease;
+    }
+
+    .lateral-enlace:hover svg {
+        transform: scale(1.1);
+    }
+
+    .lateral-enlace[aria-current='page'] {
+        font-weight: 500;
+        color: var(--acento);
+        background-color: var(--acento-suave);
+    }
+
+    .lateral-enlace[aria-current='page']::before {
+        content: '';
+        position: absolute;
+        left: -0.5rem;
+        top: 20%;
+        bottom: 20%;
+        width: 3px;
+        border-radius: 3px;
+        background-color: var(--acento);
+        animation: crecer-vertical 0.25s ease-out;
+    }
+
+    @media (width < 64rem) {
+        .lateral {
+            position: fixed;
+            inset: 0 auto 0 0;
+            z-index: 50;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            box-shadow: var(--sombra-elevada);
+        }
+
+        .lateral[data-abierto] {
+            transform: translateX(0);
+        }
+    }
+
+    .velo {
+        position: fixed;
+        inset: 0;
+        z-index: 45;
+        background-color: var(--velo);
+        backdrop-filter: blur(2px);
+        transition:
+            opacity 0.25s ease,
+            visibility 0.25s;
+    }
+
+    .velo:not([data-abierto]) {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    /* --- Portada del portal --------------------------------------------------- */
+
+    .portada {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.25rem;
+        color: #f8fafc;
+        background-image:
+            radial-gradient(60rem 22rem at 85% -20%, var(--portada-brillo), transparent 60%),
+            linear-gradient(135deg, var(--portada-desde), var(--portada-hasta));
+    }
+
+    .portada-boton {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 0.7rem;
+        padding: 0.65rem 1.1rem;
+        font-weight: 600;
+        color: #0c4a6e;
+        background-color: #f8fafc;
+        box-shadow: 0 6px 16px -6px rgb(0 0 0 / 0.5);
+    }
+
+    .portada-boton:hover {
+        transform: translateY(-1px);
+        background-color: #fff;
+    }
+
+    .portada-boton-secundario {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid rgb(248 250 252 / 0.45);
+        border-radius: 0.7rem;
+        padding: 0.65rem 1.1rem;
+        font-weight: 500;
+        color: #f8fafc;
+    }
+
+    .portada-boton-secundario:hover {
+        background-color: rgb(248 250 252 / 0.12);
+    }
+
+    .icono-destacado {
+        display: grid;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        color: var(--acento);
+        background-color: var(--acento-suave);
+    }
+
+    /* --- Movimiento ------------------------------------------------------------ */
+
+    main {
+        animation: aparecer 0.28s ease-out both;
+    }
+
+    details[open] > :not(summary) {
+        animation: entrar-desde-arriba 0.2s ease-out both;
+    }
+
+    /* Entrada escalonada de listas de tarjetas (catálogo, indicadores, pipeline). */
+    [data-productos] > li,
+    [data-bloque='indicadores'] > div,
+    [data-pipeline] > section {
+        animation: aparecer 0.35s ease-out both;
+        animation-delay: calc(min(var(--i, 0), 12) * 35ms);
+    }
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+
+@keyframes entrar-desde-arriba {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes crecer-vertical {
+    from {
+        transform: scaleY(0);
+    }
+}
+
+@keyframes girar-entrada {
+    from {
+        opacity: 0;
+        transform: rotate(-60deg) scale(0.6);
+    }
+}
+
+@keyframes latido {
+    50% {
+        opacity: 0.35;
+        transform: scale(0.7);
+    }
+}
+
+/* Quien pide menos movimiento no ve animaciones ni transiciones. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    @view-transition {
+        navigation: none;
+    }
 }

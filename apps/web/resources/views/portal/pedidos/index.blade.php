@@ -35,7 +35,7 @@
                             <td>{{ $pedido->fecha_pedido->setTimezone($zona)->format('d-m-Y H:i') }}</td>
                             @if ($perfil->esB2B)<td>{{ $pedido->direccionDespacho->alias }} · {{ $pedido->direccionDespacho->comuna->nombre }}</td>@endif
                             <td>{{ $pedido->fecha_entrega_solicitada?->format('d-m-Y') ?? '—' }}</td>
-                            <td><span class="rounded bg-slate-100 px-2 py-0.5">{{ $pedido->estadoPedido->nombre }}</span></td>
+                            <td><x-insignia :valor="$pedido->estadoPedido->nombre" /></td>
                             <td class="text-right">{{ $clp($pedido->totales['total']) }}</td>
                         </tr>
                     @endforeach

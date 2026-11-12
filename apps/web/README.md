@@ -252,6 +252,16 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **Avisos:** `php artisan alertas:notificar` (cada minuto, `onOneServer`) envía por correo (`AlertaFrioNueva`, `MAIL_MAILER`; en local al log) cada ruptura de frío nueva a los despachadores activos y a los vendedores de los clientes afectados. La marca de la última alerta avisada vive en la caché de la base (`alertas.ultima_notificada`); la primera pasada solo la fija.
 - **Controladores:** `Crm\DespachoController` y `Crm\FlotaController` (gates `despachos` y `flota`: despachador y administrador) y `Crm\AlertaController` (gate `alertas`; resolver solo con `despachos`).
 
+## Interfaz y tema (T-028)
+
+- **Modo oscuro sin tocar cada vista:** `resources/css/app.css` redefine las variables de la paleta de Tailwind (`--color-slate-*`, `--color-sky-*`, `--color-white`, …) bajo `:root[data-theme='dark']`. Las vistas siguen usando `bg-white`, `text-slate-600` o `bg-sky-700 text-white` y se invierten solas. Al escribir una vista nueva, usa esas mismas clases; un color fijo (hex o `#fff`) no cambia con el tema.
+- **Tema inicial:** `layouts/_tema.blade.php` (en `<head>`) aplica la elección guardada en `localStorage` (`cofrial.tema`) o, si no hay, la preferencia del sistema. El botón `layouts/_conmutador-tema.blade.php` la cambia. No hay nada en el servidor.
+- **Componentes Blade:** `<x-insignia :valor="$estado" />` pinta estados de pedido, ticket, despacho, cliente, etapa y prioridad con un tono por significado (éxito, información, en curso, aviso, peligro, neutro), siempre con texto. `<x-icono nombre="…" />` son iconos de línea decorativos.
+- **Menús:** `resources/js/app.js` (sin dependencias) abre y cierra cualquier elemento con `data-conmuta="id"` (atributo `data-abierto`, `aria-expanded`, cierre con Escape y clic fuera). Lo usan el menú móvil y el de cuenta del portal y el cajón lateral del CRM.
+- **Estilo global:** tarjetas, foco, tablas, botón principal y mensajes se definen una vez en `app.css` con selectores sobre las clases existentes. Las tablas anchas se desplazan dentro de sí mismas bajo 1024 px.
+- **Movimiento:** entrada de página y de tarjetas, menús y mensajes; todo se desactiva con `prefers-reduced-motion`.
+- **En local:** el servicio `assets` recompila al cambiar una vista; si justo recargas en ese instante la página puede salir sin estilos. Recarga de nuevo. No ocurre con los assets ya compilados (AWS).
+
 ## Configuración relevante
 
 - `DB_SSLMODE`: `prefer` en local, `require` (o `verify-full`) contra RDS.

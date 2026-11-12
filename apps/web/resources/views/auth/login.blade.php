@@ -3,7 +3,7 @@
 @section('titulo', 'Iniciar sesión')
 
 @section('contenido')
-    <div class="mx-auto max-w-sm">
+    <div class="mx-auto mt-6 max-w-sm rounded border border-slate-200 bg-white p-6 sm:p-8">
         <h1 class="text-2xl font-semibold">Iniciar sesión</h1>
         <p class="mt-1 text-sm text-slate-600">Clientes y equipo de Cofrial usan la misma cuenta de acceso.</p>
 

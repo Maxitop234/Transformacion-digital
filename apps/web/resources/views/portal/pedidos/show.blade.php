@@ -15,7 +15,7 @@
             <h1 class="text-2xl font-semibold">Pedido N.º {{ $pedido->id_pedido }}</h1>
             <p class="mt-1 text-sm text-slate-600">Realizado el {{ $pedido->fecha_pedido->setTimezone($zona)->format('d-m-Y H:i') }}</p>
         </div>
-        <p class="rounded bg-slate-100 px-3 py-1 text-sm font-medium" data-estado-pedido>{{ $pedido->estadoPedido->nombre }}</p>
+        <x-insignia :valor="$pedido->estadoPedido->nombre" class="text-sm" data-estado-pedido />
     </div>
 
     <dl class="mt-4 grid max-w-3xl grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">

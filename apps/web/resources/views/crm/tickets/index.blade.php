@@ -60,8 +60,8 @@
                     <td class="py-2 pr-4">{{ $ticket->asunto }}@if ($ticket->id_pedido) <span class="text-xs text-slate-500">· pedido {{ $ticket->id_pedido }}</span>@endif</td>
                     <td class="py-2 pr-4">{{ $ticket->cliente->nombre_razon_social }}</td>
                     <td class="py-2 pr-4">{{ $etiqueta($ticket->categoria) }}@if ($ticket->clasificado_por_ia) <span class="text-xs text-slate-500">(IA)</span>@endif</td>
-                    <td class="py-2 pr-4">{{ $ticket->prioridad }}</td>
-                    <td class="py-2 pr-4">{{ $etiqueta($ticket->estado) }}</td>
+                    <td class="py-2 pr-4"><x-insignia :valor="$ticket->prioridad" /></td>
+                    <td class="py-2 pr-4"><x-insignia :valor="$ticket->estado" /></td>
                     <td class="py-2 pr-4">{{ $ticket->vendedor?->nombre ?? 'Sin asignar' }}</td>
                     <td class="py-2 pr-4 whitespace-nowrap">{{ $ticket->creado_en->setTimezone($zona)->format('d-m-Y H:i') }}</td>
                 </tr>

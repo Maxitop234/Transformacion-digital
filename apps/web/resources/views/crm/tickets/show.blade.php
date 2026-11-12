@@ -18,7 +18,7 @@
                 @endif
             </p>
         </div>
-        <p class="rounded bg-slate-100 px-3 py-1 text-sm font-medium" data-estado-ticket>{{ $etiqueta($ticket->estado) }}</p>
+        <x-insignia :valor="$ticket->estado" class="text-sm" data-estado-ticket />
     </div>
 
     <div class="mt-4">@include('crm.clientes._mensajes')</div>
@@ -30,7 +30,7 @@
             <p class="mt-3 whitespace-pre-line">{{ $ticket->descripcion }}</p>
             <dl class="mt-4 grid grid-cols-2 gap-y-1 sm:grid-cols-4">
                 <dt class="text-slate-500">Categoría</dt><dd data-categoria>{{ $etiqueta($ticket->categoria) }}{{ $ticket->clasificado_por_ia ? ' (IA)' : '' }}</dd>
-                <dt class="text-slate-500">Prioridad</dt><dd>{{ $ticket->prioridad }}</dd>
+                <dt class="text-slate-500">Prioridad</dt><dd><x-insignia :valor="$ticket->prioridad" /></dd>
                 <dt class="text-slate-500">Asignado a</dt><dd>{{ $ticket->vendedor?->nombre ?? 'Sin asignar' }}</dd>
             </dl>
         </section>

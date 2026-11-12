@@ -20,7 +20,7 @@
                 ({{ $cliente->tipoCliente->codigo }}) · {{ $pedido->canal === 'crm' ? 'CRM'.($pedido->vendedorRegistra ? ', ingresado por '.$pedido->vendedorRegistra->nombre : '') : 'Portal' }}
             </p>
         </div>
-        <p class="rounded bg-slate-100 px-3 py-1 text-sm font-medium" data-estado-pedido>{{ $pedido->estadoPedido->nombre }}</p>
+        <x-insignia :valor="$pedido->estadoPedido->nombre" class="text-sm" data-estado-pedido />
     </div>
 
     <div class="mt-4">@include('crm.clientes._mensajes')</div>

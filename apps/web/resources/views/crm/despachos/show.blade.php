@@ -14,7 +14,7 @@
                 @if ($rango) · {{ $rango->nombre }} ({{ (float) $rango->temp_min_c }} a {{ (float) $rango->temp_max_c }} °C) @endif
             </p>
         </div>
-        <p class="rounded bg-slate-100 px-3 py-1 text-sm font-medium" data-estado-despacho="{{ $despacho->estado }}">{{ str_replace('_', ' ', $despacho->estado) }}</p>
+        <x-insignia :valor="$despacho->estado" class="text-sm" data-estado-despacho="{{ $despacho->estado }}" />
     </div>
 
     <div class="mt-4">@include('crm.clientes._mensajes')</div>

@@ -53,7 +53,7 @@
                     <td class="py-2 pr-4">{{ $pedido->direccionDespacho->cliente->nombre_razon_social }} <span class="text-xs text-slate-500">{{ $pedido->direccionDespacho->cliente->tipoCliente->codigo }}</span></td>
                     <td class="py-2 pr-4">{{ $pedido->canal === 'crm' ? 'CRM' : 'Portal' }}</td>
                     <td class="py-2 pr-4 whitespace-nowrap">{{ $pedido->fecha_entrega_solicitada?->format('d-m-Y') ?? '—' }}</td>
-                    <td class="py-2 pr-4">{{ $pedido->estadoPedido->nombre }}</td>
+                    <td class="py-2 pr-4"><x-insignia :valor="$pedido->estadoPedido->nombre" /></td>
                     <td class="py-2 text-right whitespace-nowrap">{{ \App\Domain\Catalogo\Precios::clp($pedido->totales['total']) }}</td>
                 </tr>
             @empty
