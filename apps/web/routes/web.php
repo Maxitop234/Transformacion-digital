@@ -107,15 +107,15 @@ Route::prefix('crm')->name('crm.')->middleware(['auth', 'rol:administrador,vende
         Route::patch('/tickets/{ticket}', [Crm\TicketController::class, 'update'])->whereNumber('ticket')->name('tickets.update');
     });
 
-    // Secciones del menú que se construyen en tareas posteriores: ya tienen su
-    // ruta y su control de acceso, para que el menú por rol sea real.
-    foreach ([
-        'oportunidades' => ['oportunidades', 'Pipeline de oportunidades', 'T-015'],
-    ] as $ruta => [$area, $titulo, $tarea]) {
-        Route::view("/{$ruta}", 'crm.seccion-pendiente', ['titulo' => $titulo, 'tarea' => $tarea])
-            ->middleware("can:{$area}")
-            ->name($ruta);
-    }
+    // Pipeline de oportunidades (T-015): vendedor (su cartera) y administrador.
+    Route::middleware('can:oportunidades')->group(function () {
+        Route::get('/oportunidades', [Crm\OportunidadController::class, 'index'])->name('oportunidades');
+        Route::post('/oportunidades', [Crm\OportunidadController::class, 'store'])->name('oportunidades.store');
+        Route::get('/oportunidades/{oportunidad}', [Crm\OportunidadController::class, 'show'])->whereNumber('oportunidad')->name('oportunidades.show');
+        Route::patch('/oportunidades/{oportunidad}', [Crm\OportunidadController::class, 'update'])->whereNumber('oportunidad')->name('oportunidades.update');
+        Route::patch('/oportunidades/{oportunidad}/etapa', [Crm\OportunidadController::class, 'etapa'])->whereNumber('oportunidad')->name('oportunidades.etapa');
+        Route::post('/oportunidades/{oportunidad}/deshacer-vinculo', [Crm\OportunidadController::class, 'deshacer'])->whereNumber('oportunidad')->name('oportunidades.deshacer');
+    });
 
     // Mantenedores de administración (T-007): solo el administrador.
     Route::prefix('admin')->middleware('can:administracion')->group(function () {

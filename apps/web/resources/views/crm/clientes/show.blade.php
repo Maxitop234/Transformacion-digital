@@ -179,7 +179,11 @@
         <ul class="mt-2 divide-y divide-slate-100">
             @forelse ($cliente->oportunidades as $oportunidad)
                 <li class="flex justify-between gap-2 py-2">
-                    <span>{{ $oportunidad->titulo }}</span>
+                    @can('oportunidades')
+                        <a href="{{ route('crm.oportunidades.show', $oportunidad->id_oportunidad) }}" class="text-sky-700 hover:underline">{{ $oportunidad->titulo }}</a>
+                    @else
+                        <span>{{ $oportunidad->titulo }}</span>
+                    @endcan
                     <span class="text-slate-500">{{ $oportunidad->etapaPipeline->nombre }} · {{ $oportunidad->fecha_creacion->setTimezone($zona)->format('d-m-Y') }}</span>
                 </li>
             @empty

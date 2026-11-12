@@ -9,7 +9,7 @@ Aplicación Laravel que contiene el portal B2B/B2C, el CRM, el worker de colas y
 | Clientes y accesos | Inicio de sesión, registro, roles | T-006, T-009 |
 | Catálogo e inventario | `/catalogo`, mantenedores | T-007, T-008 |
 | Ventas | Carrito (`app/Domain/Ventas`), checkout, pedidos, pagos simulados, seguimiento y puntos de entrega | T-010 a T-012 |
-| CRM | `/crm`: panel (`app/Domain/Crm`), clientes, pipeline, pedidos, tickets | T-013 a T-016, T-018 |
+| CRM | `/crm`: panel (`app/Domain/Crm`), clientes, pipeline de oportunidades, pedidos, tickets | T-013 a T-016, T-018 |
 | Logística | Despachos, flota, alertas de frío | T-017 |
 | IA | Clasificación de tickets y asistente | T-021 |
 
@@ -159,7 +159,6 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 | `portal.comprar` | | | | ● |
 
 - **Cartera (RN-10):** `Cliente::visiblePara($usuario)` (y lo mismo en `ContactoCliente`, `DireccionDespacho`, `Carrito`, `Oportunidad`, `Interaccion`, `Ticket` y `Pedido`, este último a través de su dirección) limita la consulta: el vendedor ve solo sus clientes, el cliente del portal solo a sí mismo y el administrador y el despachador todo. Un identificador ajeno responde 404. `ClientePolicy` decide las acciones sobre un cliente visible (por ejemplo, solo el administrador reasigna).
-- Las secciones del CRM que aún no existen (`/crm/oportunidades`, `/crm/pedidos`, `/crm/despachos`, …) ya tienen ruta y gate y muestran «se construye en T-0xx».
 
 ## Registro de clientes (T-009)
 
@@ -230,6 +229,14 @@ Los datos de demo son ficticios y siempre los mismos (azar con semilla fija). Lo
 - **Validación** (`ValidarEmpresa`, RN-02): solo B2B `pendiente_validacion` con RUT; lista institucional activa y vigente; el vendedor queda como responsable (el administrador puede elegir otro). Desde ese momento `Precios::perfil()` le da su lista y puede comprar.
 - **Interacciones** (`App\Domain\Crm\RegistrarInteraccion`): fecha `now()`, tipo de la lista y vendedor (el que la registra o, si es administrador, el del cliente); la oportunidad debe ser del mismo cliente. **Contactos** (`AgregarContacto`): un nuevo principal reemplaza al anterior en la misma transacción.
 - **Pedido telefónico** (RN-08): `CrearPedido::telefonico()` comparte con el portal el mismo núcleo (`registrar()`): precio de la lista del cliente (`Precios::perfilDeCliente()`), mínimo, reserva de stock, historial y OC para B2B. Queda con `canal = crm`, `id_vendedor_registra` y sin carrito. Un B2C paga desde el portal dentro de los 30 minutos de reserva.
+
+## Pipeline de oportunidades (T-015)
+
+- **`App\Domain\Crm\TransicionesOportunidad`**: único lugar que cambia `oportunidad.id_etapa`. La tabla `TRANSICIONES` replica BUSINESS_RULES.md §5. Una cerrada o una transición inexistente devuelve 409; una condición no cumplida, 422 con el motivo. Cada cambio escribe `historial_etapa`; el actor `null` es el usuario `sistema`.
+- **Condiciones:** contactado exige una interacción (ligada a la oportunidad o al cliente sin oportunidad, como el panel); calificado, monto estimado; propuesta, cliente activo (B2B con `fecha_validacion`) y con lista; negociación, una interacción posterior a la última entrada en «Propuesta»; ganado, un pedido vinculado (se puede elegir uno del cliente, sin oportunidad y no cancelado ni rechazado); perdido, motivo.
+- **Vínculo automático:** `GanarOportunidadConPedido` (lo llama `ConfirmarOrdenCompra`) usa `ganarConPedido` con el actor sistema. `deshacerVinculo` lo revierte si el último cambio lo hizo el sistema.
+- **`GuardarOportunidad`**: alta en «Prospecto nuevo» (orígenes manuales: `vendedor`, `telefono`, `referido`; `portal` queda para el registro web) y edición mientras está abierta.
+- **Controlador** `Crm\OportunidadController` (gate `oportunidades`). Siempre `visiblePara()`.
 
 ## Pedidos en el CRM (T-016)
 

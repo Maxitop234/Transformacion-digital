@@ -36,13 +36,19 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] Test por cada condición de transición de `BUSINESS_RULES.md §5`.
-- [ ] Test: no se puede mover una oportunidad cerrada.
-- [ ] Test: perder sin motivo se rechaza.
-- [ ] Test: una recompra B2B sin oportunidad abierta no crea una nueva.
-- [ ] El vendedor ve solo su pipeline.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] Test por cada condición de transición de `BUSINESS_RULES.md §5`.
+- [x] Test: no se puede mover una oportunidad cerrada.
+- [x] Test: perder sin motivo se rechaza.
+- [x] Test: una recompra B2B sin oportunidad abierta no crea una nueva.
+- [x] El vendedor ve solo su pipeline.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
 - Recortable: mover la tarjeta puede ser un formulario simple en vez de arrastrar y soltar.
+- Hecho con formularios en el detalle, sin arrastrar y soltar: cada destino muestra por qué aún no se puede. Tests en `apps/web/tests/Feature/Crm/PipelineOportunidadesTest.php` (`php artisan test --filter=PipelineOportunidadesTest`).
+- No se saltan etapas: solo las transiciones de §5, de a una (409 si no).
+- Ganar a mano exige elegir un pedido del cliente (sin oportunidad, no cancelado ni rechazado), porque la condición de §5 es «existe un pedido vinculado».
+- «Deshacer» solo aplica si el último paso a «Ganado» lo hizo el usuario `sistema`. Desvincula los pedidos, vuelve a la etapa anterior (según el historial) y lo registra con el motivo. Agregué esta excepción en BUSINESS_RULES.md §5.
+- El alcance del vendedor es por cartera del cliente (`visiblePara`, RN-10), no por `oportunidad.id_vendedor`. Reasignar la cartera no cambia el `id_vendedor` de las oportunidades existentes, pero el nuevo vendedor ya las ve.
+- Quité la vista `crm/seccion-pendiente`, que quedó sin uso: todas las secciones del menú ya existen.

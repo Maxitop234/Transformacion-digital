@@ -88,7 +88,7 @@ Cualquier otra transición es inválida y debe rechazarse. Toda transición escr
 | Propuesta → Negociación | Vendedor | El cliente respondió la propuesta (interacción) | `historial_etapa` |
 | Propuesta o Negociación → Ganado | Sistema o vendedor | Existe un pedido vinculado a la oportunidad | `pedido.id_oportunidad`, `fecha_cierre` |
 | Cualquier etapa abierta → Perdido | Vendedor | Se ingresa el motivo de pérdida (obligatorio) | `motivo_perdida`, `fecha_cierre` |
-| Ganado o Perdido → otra etapa | No permitido | Una oportunidad cerrada no se reabre: se crea una nueva | — |
+| Ganado o Perdido → otra etapa | No permitido | Una oportunidad cerrada no se reabre: se crea una nueva. Única excepción: el vendedor deshace un «Ganado» automático del sistema y la oportunidad vuelve a la etapa anterior (§6) | `historial_etapa` con el motivo |
 
 ## 6. Cómo se relacionan ambos ciclos
 
