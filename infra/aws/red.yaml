@@ -1,0 +1,210 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Cofrial · Red (T-022). VPC propia en dos zonas, capa pública con Internet
+  Gateway, capa de datos sin ruta a internet y Security Groups encadenados.
+  Diseño en docs/ARCHITECTURE.md §3.1-3.2 (ADR-0001 a 0004, ADR-0018).
+
+Parameters:
+  IpEquipo:
+    Type: String
+    Description: IP pública del equipo en formato /32; es el único origen admitido para SSH.
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/32$'
+    ConstraintDescription: Debe ser una sola IP en formato /32 (por ejemplo 203.0.113.10/32). Nunca 0.0.0.0/0.
+
+Resources:
+  # --- VPC e Internet Gateway --------------------------------------------------
+
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.20.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - { Key: Name, Value: cofrial-vpc }
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - { Key: Name, Value: cofrial-igw }
+
+  VinculoInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  # --- Subredes ----------------------------------------------------------------
+
+  SubredPublicaA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.1.0/24
+      AvailabilityZone: us-east-1a
+      # Las EC2 necesitan IP pública para salir a internet: no hay NAT (ADR-0003).
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: cofrial-publica-a }
+
+  SubredPublicaB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.2.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: cofrial-publica-b }
+
+  SubredDatosA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.21.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: false
+      Tags:
+        - { Key: Name, Value: cofrial-datos-a }
+
+  SubredDatosB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.22.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: false
+      Tags:
+        - { Key: Name, Value: cofrial-datos-b }
+
+  # --- Tablas de rutas -----------------------------------------------------------
+
+  TablaPublica:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - { Key: Name, Value: cofrial-rt-publica }
+
+  RutaInternet:
+    Type: AWS::EC2::Route
+    DependsOn: VinculoInternetGateway
+    Properties:
+      RouteTableId: !Ref TablaPublica
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  AsociacionPublicaA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubredPublicaA
+      RouteTableId: !Ref TablaPublica
+
+  AsociacionPublicaB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubredPublicaB
+      RouteTableId: !Ref TablaPublica
+
+  # Solo la ruta local implícita de la VPC: la capa de datos no llega a internet.
+  TablaDatos:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - { Key: Name, Value: cofrial-rt-datos }
+
+  AsociacionDatosA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubredDatosA
+      RouteTableId: !Ref TablaDatos
+
+  AsociacionDatosB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubredDatosB
+      RouteTableId: !Ref TablaDatos
+
+  # --- Security Groups encadenados (ADR-0004) --------------------------------------
+
+  SgAlb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: cofrial-sg-alb
+      GroupDescription: Balanceador - HTTPS desde internet y HTTP para redirigir
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0, Description: HTTPS publico }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0, Description: HTTP solo para redirigir a HTTPS }
+      Tags:
+        - { Key: Name, Value: cofrial-sg-alb }
+
+  SgWeb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: cofrial-sg-web
+      GroupDescription: EC2 web - HTTP solo desde el balanceador, SSH solo desde el equipo
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, SourceSecurityGroupId: !Ref SgAlb, Description: HTTP desde sg-alb }
+        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref IpEquipo, Description: SSH desde la IP del equipo }
+      Tags:
+        - { Key: Name, Value: cofrial-sg-web }
+
+  SgIot:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: cofrial-sg-iot
+      GroupDescription: Nodo IoT - sin entrada publica, SSH solo desde el equipo
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref IpEquipo, Description: SSH desde la IP del equipo }
+      Tags:
+        - { Key: Name, Value: cofrial-sg-iot }
+
+  SgDb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: cofrial-sg-db
+      GroupDescription: RDS - PostgreSQL solo desde sg-web y sg-iot
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 5432, ToPort: 5432, SourceSecurityGroupId: !Ref SgWeb, Description: PostgreSQL desde sg-web }
+        - { IpProtocol: tcp, FromPort: 5432, ToPort: 5432, SourceSecurityGroupId: !Ref SgIot, Description: PostgreSQL desde sg-iot }
+      # La base no inicia conexiones: se reemplaza la salida abierta por defecto
+      # por una regla inofensiva hacia su propia VPC.
+      SecurityGroupEgress:
+        - { IpProtocol: tcp, FromPort: 5432, ToPort: 5432, CidrIp: 10.20.0.0/16, Description: Solo trafico interno }
+      Tags:
+        - { Key: Name, Value: cofrial-sg-db }
+
+Outputs:
+  VpcId:
+    Value: !Ref Vpc
+    Export: { Name: cofrial-red-vpc }
+  SubredPublicaA:
+    Value: !Ref SubredPublicaA
+    Export: { Name: cofrial-red-publica-a }
+  SubredPublicaB:
+    Value: !Ref SubredPublicaB
+    Export: { Name: cofrial-red-publica-b }
+  SubredDatosA:
+    Value: !Ref SubredDatosA
+    Export: { Name: cofrial-red-datos-a }
+  SubredDatosB:
+    Value: !Ref SubredDatosB
+    Export: { Name: cofrial-red-datos-b }
+  SgAlb:
+    Value: !Ref SgAlb
+    Export: { Name: cofrial-red-sg-alb }
+  SgWeb:
+    Value: !Ref SgWeb
+    Export: { Name: cofrial-red-sg-web }
+  SgIot:
+    Value: !Ref SgIot
+    Export: { Name: cofrial-red-sg-iot }
+  SgDb:
+    Value: !Ref SgDb
+    Export: { Name: cofrial-red-sg-db }

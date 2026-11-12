@@ -25,6 +25,7 @@ Los ADR 0001 a 0011 provienen de las fichas de decisión del informe de diseño 
 | [0015](0015-proveedor-ia.md) | Proveedor de la API de IA | Aceptada | 2026-11-11 |
 | [0016](0016-esquema-por-migraciones.md) | Esquema en español gestionado por migraciones de Laravel | Aceptada | 2026-11-11 |
 | [0017](0017-telemetria-sin-particionar.md) | Telemetría sin particionar en el prototipo | Aceptada | 2026-11-10 |
+| [0018](0018-infraestructura-con-cloudformation.md) | Infraestructura de AWS como plantillas de CloudFormation | Aceptada | 2026-11-12 |
 
 ## Estados
 

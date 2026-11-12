@@ -63,7 +63,7 @@ La columna **RC** marca la ruta crítica: el conjunto mínimo que cubre las cinc
 
 | Tarea | Título | Depende de | Pauta | RC | Estado |
 | --- | --- | --- | --- | :-: | --- |
-| [T-022](T-022-red-aws/README.md) | Red en AWS | — | 1 | ● | Pendiente |
+| [T-022](T-022-red-aws/README.md) | Red en AWS | — | 1 | ● | Terminada |
 | [T-023](T-023-base-de-datos-rds/README.md) | Base de datos en Amazon RDS | T-003, T-005, T-022 | 1 | ● | Pendiente |
 | [T-024](T-024-despliegue-web-y-balanceador/README.md) | Despliegue web y balanceador | T-002, T-022, T-023 | 1, 2 | ● | Pendiente |
 | [T-025](T-025-despliegue-nodo-iot/README.md) | Despliegue del nodo IoT | T-019, T-022, T-023 | 3 | ● | Pendiente |

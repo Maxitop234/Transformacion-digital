@@ -73,7 +73,9 @@ No hay NAT Gateway: las EC2 tienen IP pública para salir a internet y su Securi
 | `sg-iot` | 22 | IP del equipo `/32` |
 | `sg-db` | 5432 | `sg-web`, `sg-iot` |
 
-Las NACL quedan por defecto.
+Las NACL quedan por defecto. `sg-db` tampoco abre salida a internet: su única regla de salida es 5432 dentro de la VPC.
+
+La red completa es el stack `cofrial-red` ([`infra/aws/red.yaml`](../infra/aws/red.yaml), ADR-0018); `infra/aws/verificar-red.sh` comprueba estas reglas contra la cuenta.
 
 ### 3.3 Cómputo
 
@@ -209,7 +211,8 @@ Consideraciones del Learner Lab que el despliegue debe tolerar:
 
 - Las sesiones caducan y las instancias se detienen: todos los contenedores usan política de reinicio y la aplicación arranca sola.
 - Las IP públicas de las EC2 cambian: solo se referencia el DNS del ALB.
-- No se pueden crear roles IAM propios: se usa el perfil de instancia provisto por el laboratorio.
+- No se pueden crear roles IAM propios: se usa el perfil de instancia provisto por el laboratorio (`LabInstanceProfile`).
+- La infraestructura se crea y se borra con stacks de CloudFormation (ADR-0018), para no dejar recursos sueltos que consuman el presupuesto. Las restricciones encontradas están en [`infra/aws/README.md`](../infra/aws/README.md#restricciones-del-learner-lab).
 - Verificar al desplegar que la cuenta permite RDS Multi-AZ y los tipos de instancia elegidos; si no, registrar la desviación en un ADR.
 
 ## 6. Alta disponibilidad y continuidad
