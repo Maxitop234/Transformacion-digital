@@ -23,7 +23,8 @@ registrar "cargando datos de demostración"
     artisan db:seed --class=DemoSeeder --force
 
 registrar "aplicando la contraseña de demo de AWS"
-CLAVE_DEMO_AWS="$(secreto DEMO_PASSWORD)" "${compose[@]}" exec -T -e CLAVE_DEMO_AWS web \
+# HOME=/tmp: tinker (psysh) necesita escribir su configuración y www-data no tiene home.
+CLAVE_DEMO_AWS="$(secreto DEMO_PASSWORD)" "${compose[@]}" exec -T -e CLAVE_DEMO_AWS -e HOME=/tmp web \
     php artisan tinker --execute '
         $n = App\Models\Usuario::where("email", "!=", Database\Seeders\CatalogoSeeder::EMAIL_SISTEMA)
             ->get()->each(fn ($u) => $u->update(["password_hash" => getenv("CLAVE_DEMO_AWS")]))->count();
