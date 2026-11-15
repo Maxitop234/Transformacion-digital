@@ -32,7 +32,9 @@ clave() {
 }
 
 echo "Secretos en $PREFIJO:"
-for nombre in DB_ADMIN_PASSWORD DB_PASSWORD IOT_DB_PASSWORD BI_DB_PASSWORD GF_DATABASE_PASSWORD GF_SECURITY_ADMIN_PASSWORD; do
+# DEMO_PASSWORD reemplaza en AWS la contraseña pública de las cuentas de demo
+# (cofrial-demo, apps/web/README.md), porque el sitio queda abierto a internet.
+for nombre in DB_ADMIN_PASSWORD DB_PASSWORD IOT_DB_PASSWORD BI_DB_PASSWORD GF_DATABASE_PASSWORD GF_SECURITY_ADMIN_PASSWORD DEMO_PASSWORD; do
     guardar "$nombre" "$(clave)"
 done
 guardar APP_KEY "base64:$(python3 -c 'import base64, os; print(base64.b64encode(os.urandom(32)).decode())')"
