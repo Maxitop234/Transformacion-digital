@@ -35,11 +35,17 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] Detener una instancia web dispara un correo de alarma.
-- [ ] Las cuatro alarmas existen y están en estado OK en operación normal.
-- [ ] Se probó al menos una restauración a un punto en el tiempo, o se documentó por qué no fue posible en el laboratorio.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] Detener una instancia web dispara un correo de alarma.
+- [x] Las cuatro alarmas existen y están en estado OK en operación normal.
+- [x] Se probó al menos una restauración a un punto en el tiempo, o se documentó por qué no fue posible en el laboratorio.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
 - Recortable si el tiempo es crítico: es la tarea de menor peso en la pauta.
+- **Hecho (2026-11-15).** Stack `cofrial-monitoreo` ([`infra/aws/monitoreo.yaml`](../../infra/aws/monitoreo.yaml)): tópico `cofrial-alarmas` con el correo del equipo (suscripción confirmada) y las cuatro alarmas `cofrial-web-no-saludable`, `cofrial-ec2-chequeo-fallido`, `cofrial-ec2-cpu-alta` y `cofrial-rds-poco-espacio`, todas en `OK` en operación normal. Avisan al entrar en `ALARM` y al volver a `OK`.
+- La alarma del balanceador mide `HealthyHostCount < 2` y no `UnHealthyHostCount`: en la primera prueba una instancia detenida quedó `unused` en el target group y la alarma no saltó. Con el cambio, detener `cofrial-web-2` la llevó a `ALARM` y SNS envió el correo; al encenderla volvió a `OK`.
+- Las de chequeo de estado y CPU cubren las tres EC2 con una expresión `MAX` sobre sus métricas.
+- Respaldos automáticos diarios (06:04 UTC) desde el 2026-11-12, retención de 7 días; snapshot manual `cofrial-db-manual-2026-11-15`.
+- Restauración a un punto en el tiempo probada: se restauró a las 18:27:17 UTC en una instancia aparte (`cofrial-db-prueba-pitr`, Single-AZ), que tenía las 34 tablas, los 50 camiones y la última lectura de telemetría a las 18:27:14; luego se borró.
+- Runbook de cada alarma y de la restauración en [`infra/aws/README.md`](../../infra/aws/README.md#runbook-de-alarmas).

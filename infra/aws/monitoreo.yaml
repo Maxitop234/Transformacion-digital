@@ -1,0 +1,160 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Cofrial · Monitoreo (T-026). Tópico SNS con el correo del equipo y las cuatro
+  alarmas de CloudWatch de docs/ARCHITECTURE.md §3.5 (ADR-0011). Requiere los
+  stacks cofrial-web, cofrial-iot y cofrial-datos.
+
+Parameters:
+  CorreoAlertas:
+    Type: String
+    Description: Correo que recibe las alarmas; AWS envía un enlace de confirmación.
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+
+Resources:
+  Topico:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: cofrial-alarmas
+      DisplayName: Cofrial alarmas
+      Subscription:
+        - { Protocol: email, Endpoint: !Ref CorreoAlertas }
+      Tags:
+        - { Key: proyecto, Value: cofrial }
+
+  # 1. Una EC2 web sale de rotación en el balanceador (falla /health o está detenida).
+  # Se mide HealthyHostCount y no UnHealthyHostCount: una instancia detenida
+  # queda «unused» en el target group y no cuenta como no saludable.
+  AlarmaInstanciaNoSaludable:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: cofrial-web-no-saludable
+      AlarmDescription: Hay menos de dos EC2 web sanas en el balanceador. Runbook en infra/aws/README.md.
+      Namespace: AWS/ApplicationELB
+      MetricName: HealthyHostCount
+      Dimensions:
+        - { Name: LoadBalancer, Value: !ImportValue cofrial-web-alb }
+        - { Name: TargetGroup, Value: !ImportValue cofrial-web-tg }
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 2
+      ComparisonOperator: LessThanThreshold
+      # Sin datos = el balanceador no está informando: también es una caída.
+      TreatMissingData: breaching
+      AlarmActions: [!Ref Topico]
+      OKActions: [!Ref Topico]
+
+  # 2. Chequeo de estado fallido en cualquiera de las tres EC2.
+  AlarmaChequeoEstado:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: cofrial-ec2-chequeo-fallido
+      AlarmDescription: Falló el chequeo de estado (sistema o instancia) de una EC2 de Cofrial.
+      Metrics:
+        - Id: peor
+          Expression: MAX([web1, web2, iot])
+          Label: Peor chequeo de estado
+          ReturnData: true
+        - Id: web1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/EC2
+              MetricName: StatusCheckFailed
+              Dimensions: [{ Name: InstanceId, Value: !ImportValue cofrial-web-1 }]
+            Period: 60
+            Stat: Maximum
+        - Id: web2
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/EC2
+              MetricName: StatusCheckFailed
+              Dimensions: [{ Name: InstanceId, Value: !ImportValue cofrial-web-2 }]
+            Period: 60
+            Stat: Maximum
+        - Id: iot
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/EC2
+              MetricName: StatusCheckFailed
+              Dimensions: [{ Name: InstanceId, Value: !ImportValue cofrial-iot-instancia }]
+            Period: 60
+            Stat: Maximum
+      EvaluationPeriods: 2
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      # Fuera de una sesión del laboratorio las EC2 están detenidas y no hay datos.
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref Topico]
+      OKActions: [!Ref Topico]
+
+  # 3. CPU sobre 80 % sostenida en cualquiera de las tres EC2.
+  AlarmaCpu:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: cofrial-ec2-cpu-alta
+      AlarmDescription: CPU sobre 80 % durante 10 minutos en una EC2 de Cofrial.
+      Metrics:
+        - Id: peor
+          Expression: MAX([web1, web2, iot])
+          Label: CPU de la EC2 más cargada
+          ReturnData: true
+        - Id: web1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/EC2
+              MetricName: CPUUtilization
+              Dimensions: [{ Name: InstanceId, Value: !ImportValue cofrial-web-1 }]
+            Period: 300
+            Stat: Average
+        - Id: web2
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/EC2
+              MetricName: CPUUtilization
+              Dimensions: [{ Name: InstanceId, Value: !ImportValue cofrial-web-2 }]
+            Period: 300
+            Stat: Average
+        - Id: iot
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/EC2
+              MetricName: CPUUtilization
+              Dimensions: [{ Name: InstanceId, Value: !ImportValue cofrial-iot-instancia }]
+            Period: 300
+            Stat: Average
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref Topico]
+      OKActions: [!Ref Topico]
+
+  # 4. Poco espacio libre en RDS (20 GB asignados; aviso bajo 2 GB).
+  AlarmaEspacioRds:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: cofrial-rds-poco-espacio
+      AlarmDescription: Quedan menos de 2 GB libres en la base. Revisar el volumen de telemetría (ARCHITECTURE.md §3.4).
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      Dimensions:
+        - { Name: DBInstanceIdentifier, Value: !ImportValue cofrial-datos-instancia }
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 2147483648
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref Topico]
+      OKActions: [!Ref Topico]
+
+Outputs:
+  Topico:
+    Value: !Ref Topico
+    Export: { Name: cofrial-monitoreo-topico }
