@@ -7,8 +7,9 @@
 #   infra/aws/desplegar.sh iot        # el nodo IoT
 #   infra/aws/desplegar.sh web main   # rama explícita (por defecto, la de despliegue.conf)
 #
-# Las EC2 web se actualizan una a la vez: mientras una reconstruye, el
-# balanceador atiende con la otra.
+# Las EC2 web se actualizan una a la vez, en orden de nombre: primero
+# cofrial-web-1, que migra y crea los usuarios de la base que necesita la otra.
+# Mientras una reconstruye, el balanceador atiende con la otra.
 set -euo pipefail
 
 rol="${1:?Uso: desplegar.sh web|iot [rama]}"
@@ -17,7 +18,7 @@ rama="${2:-}"
 
 instancias="$(aws ec2 describe-instances \
     --filters "Name=tag:cofrial-rol,Values=$rol" "Name=instance-state-name,Values=running" \
-    --query 'Reservations[].Instances[].[Tags[?Key==`Name`]|[0].Value, InstanceId]' --output text | sort -r)"
+    --query 'Reservations[].Instances[].[Tags[?Key==`Name`]|[0].Value, InstanceId]' --output text | sort)"
 [[ -n "$instancias" ]] || { echo "No hay instancias $rol en ejecución." >&2; exit 1; }
 
 comando=$(cat <<EOF
