@@ -36,13 +36,18 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] La instancia figura como Multi-AZ y no accesible públicamente.
-- [ ] Una conexión sin TLS es rechazada.
-- [ ] La base no es alcanzable desde fuera de la VPC.
-- [ ] Existen las 34 tablas y los tres roles con sus permisos.
-- [ ] Hay al menos un snapshot manual.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] La instancia figura como Multi-AZ y no accesible públicamente.
+- [x] Una conexión sin TLS es rechazada.
+- [x] La base no es alcanzable desde fuera de la VPC.
+- [x] Existen las 34 tablas y los tres roles con sus permisos.
+- [x] Hay al menos un snapshot manual.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
 - Si el laboratorio no permite Multi-AZ, desplegar Single-AZ, registrar el ADR y explicarlo en la defensa.
+- **Hecho (2026-11-15).** Stack `cofrial-datos` ([`infra/aws/datos.yaml`](../../infra/aws/datos.yaml)): PostgreSQL 16.15, `db.t3.micro`, **Multi-AZ permitido por el laboratorio** (primaria en us-east-1b, réplica en us-east-1a), `gp2` cifrado, sin acceso público, respaldos de 7 días, grupo de parámetros `cofrial-postgres16` con `rds.force_ssl=1`. Usuario maestro `cofrial_admin`; su contraseña sale de Parameter Store (`secretos.sh`, ADR-0019).
+- El esquema lo aplica `cofrial-web-1` al arrancar (migraciones con el maestro + `db/aplicar.sh`), porque la base solo es alcanzable desde la VPC. Catálogos con `CatalogoSeeder`; datos de demo con `infra/aws/cargar-demo.sh` (T-027).
+- Verificación desde `cofrial-web-1`: `db/pruebas_permisos.sh` con TLS pasó las 167 comprobaciones; 34 tablas de negocio, PostGIS 3.4.6, roles `app_rw`, `iot_writer`, `bi_reader` y `grafana_rw`. Una conexión con `sslmode=disable` se rechaza (`no pg_hba.conf entry … no encryption`); con TLS usa TLSv1.3. Desde fuera de la VPC el endpoint resuelve a `10.20.22.50` y no es alcanzable.
+- Snapshot manual `cofrial-db-manual-2026-11-15`. Procedimientos de migración, snapshot y restauración en [`infra/aws/README.md`](../../infra/aws/README.md).
+- RDS no se detiene sola al terminar la sesión del laboratorio: detenerla a mano (`aws rds stop-db-instance --db-instance-identifier cofrial-db`).
