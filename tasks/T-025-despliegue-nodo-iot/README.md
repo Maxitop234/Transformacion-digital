@@ -36,13 +36,16 @@ Leer antes de empezar:
 
 ## Criterios de aceptación
 
-- [ ] `docker ps` muestra cinco contenedores del simulador en ejecución.
-- [ ] En RDS aparecen unas 50 filas nuevas de telemetría cada 30 segundos.
-- [ ] Tras reiniciar la instancia, los contenedores vuelven solos.
-- [ ] El nodo no tiene la contraseña de `app_rw` ni la clave de la IA.
-- [ ] La carga del simulador no afecta el tiempo de respuesta del portal.
-- [ ] La documentación afectada quedó actualizada y el estado se cambió en el índice.
+- [x] `docker ps` muestra cinco contenedores del simulador en ejecución.
+- [x] En RDS aparecen unas 50 filas nuevas de telemetría cada 30 segundos.
+- [x] Tras reiniciar la instancia, los contenedores vuelven solos.
+- [x] El nodo no tiene la contraseña de `app_rw` ni la clave de la IA.
+- [x] La carga del simulador no afecta el tiempo de respuesta del portal.
+- [x] La documentación afectada quedó actualizada y el estado se cambió en el índice.
 
 ## Notas
 
-_Sin notas todavía. Registrar aquí decisiones, comandos útiles y pendientes al trabajar la tarea._
+- Stack `cofrial-iot` ([`infra/aws/iot.yaml`](../../infra/aws/iot.yaml)): EC2 `cofrial-iot` t3.small en `publica-a` con `sg-iot`, EBS cifrado. El user data clona el repositorio y llama a [`infra/aws/arranque/iot.sh`](../../infra/aws/arranque/iot.sh), que escribe `/etc/cofrial/iot.env` (solo las seis variables `IOT_DB_*`, con `sslmode=require`) y construye la imagen en el nodo.
+- Verificado: cinco contenedores `cofrial-iot-iot-N-1` en ejecución; en RDS, 50 filas de 50 camiones distintos en cada ventana de 30 s; tras `reboot-instances` los cinco contenedores volvieron solos. El nodo no tiene en disco la contraseña de `app_rw` ni la clave de la IA (pero ver el riesgo de `LabRole` en `SECURITY.md` §12).
+- Tiempo de respuesta del portal medido desde Chile (10 peticiones): `/` 0,64 s con los simuladores detenidos y 0,58 s con ellos; `/catalogo` 0,71 s y 0,74 s. La diferencia está dentro de la variación de red; el tiempo lo domina la distancia a us-east-1.
+- Comandos para la defensa (contenedores, lecturas, ruptura de frío) en [`infra/aws/README.md`](../../infra/aws/README.md#comandos-de-verificación-útiles-en-la-defensa).

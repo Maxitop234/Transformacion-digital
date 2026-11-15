@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Cofrial · Nodo IoT (T-025). EC2 t3.small dedicada en publica-a con los cinco
+  contenedores del simulador (compose.iot.yml) escribiendo en RDS como
+  iot_writer. Diseño en docs/ARCHITECTURE.md §3.3 (ADR-0006). Requiere los
+  stacks cofrial-red y cofrial-datos y los secretos de secretos.sh.
+
+Parameters:
+  Ami:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  TipoInstancia:
+    Type: String
+    Default: t3.small
+  Repositorio:
+    Type: String
+    Default: https://github.com/Maxitop234/Transformacion-digital.git
+  Rama:
+    Type: String
+    Default: main
+
+Resources:
+  NodoIot:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref Ami
+      InstanceType: !Ref TipoInstancia
+      SubnetId: !ImportValue cofrial-red-publica-a
+      SecurityGroupIds:
+        - !ImportValue cofrial-red-sg-iot
+      IamInstanceProfile: LabInstanceProfile
+      KeyName: vockey
+      MetadataOptions: { HttpTokens: required, HttpPutResponseHopLimit: 1 }
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 20, VolumeType: gp3, Encrypted: true, DeleteOnTermination: true }
+      Tags:
+        - { Key: Name, Value: cofrial-iot }
+        - { Key: cofrial-rol, Value: iot }
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+            set -euxo pipefail
+            exec > >(tee -a /var/log/cofrial-arranque.log) 2>&1
+            dnf install -y -q git
+            install -d -m 700 /etc/cofrial
+            cat > /etc/cofrial/despliegue.conf <<EOF
+            COFRIAL_DB_HOST=${Endpoint}
+            COFRIAL_RAMA=${Rama}
+            EOF
+            [ -d /opt/cofrial/.git ] || git clone --branch ${Rama} ${Repositorio} /opt/cofrial
+            /opt/cofrial/infra/aws/arranque/iot.sh
+          - Endpoint: !ImportValue cofrial-datos-endpoint
+
+Outputs:
+  NodoIot:
+    Value: !Ref NodoIot
+    Export: { Name: cofrial-iot-instancia }
