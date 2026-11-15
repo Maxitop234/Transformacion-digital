@@ -77,6 +77,8 @@ Controles de aplicación exigidos en toda tarea que toque la web:
 ## 7. Secretos
 
 - Todas las credenciales viven en un archivo `.env` **fuera del repositorio**. `.env.example` solo contiene marcadores de posición.
+- En AWS, los secretos se generan al azar con [`infra/aws/secretos.sh`](../infra/aws/secretos.sh) y se guardan en SSM Parameter Store (`/cofrial/prod/`, `SecureString`). Cada EC2 los lee con su rol y escribe en `/etc/cofrial` (permisos `600`) solo los `.env` de sus servicios. Ningún secreto de producción existe en el repositorio ni en el equipo de quien despliega.
+- Las cuentas de demo en AWS no usan la contraseña pública `cofrial-demo` sino `/cofrial/prod/DEMO_PASSWORD` ([`infra/aws/cargar-demo.sh`](../infra/aws/cargar-demo.sh)).
 - Las credenciales del Learner Lab son temporales: se cargan en la terminal de quien despliega y nunca se escriben en archivos del repo.
 - Las llaves SSH (`*.pem`) están ignoradas por Git.
 - Si un secreto llega a un commit: se rota de inmediato y luego se limpia el historial. Borrar el archivo no basta.
@@ -118,6 +120,8 @@ Controles de aplicación exigidos en toda tarea que toque la web:
 | Certificado autofirmado | No hay dominio propio | Se explica en la defensa; con dominio se usa un certificado público de ACM |
 | EC2 web con IP pública | Evita el costo de un NAT Gateway | `sg-web` solo admite tráfico del balanceador |
 | Credenciales de base dentro del contenedor IoT | El simulador escribe directo en RDS | Usuario `iot_writer` de mínimo privilegio |
+| Todas las EC2 usan el mismo rol `LabRole` | El laboratorio no permite crear roles de IAM | El nodo IoT solo escribe en disco la clave de `iot_writer`, pero su rol podría leer los demás secretos de `/cofrial/prod/`. Con una cuenta propia se crea un rol por componente con acceso solo a sus parámetros |
+| Cuentas de demo en un sitio público | La defensa necesita iniciar sesión por rol | Contraseña aleatoria propia de AWS; los datos son ficticios |
 | Sin WAF ni registro centralizado de logs | Costo y alcance del laboratorio | Validación en la aplicación; métricas básicas de CloudWatch |
 | Pasarela de pago simulada | Alcance del Hito 2 | No se capturan datos de tarjetas en ningún punto |
 

@@ -8,7 +8,8 @@ Dockerfiles y archivos Compose del sistema.
 | `nginx/` | Nginx: publica Laravel y deriva `/bi` a Grafana | T-002 |
 | `db/01-inicializar-dev.sh` | Inicialización local de la base: usuarios con [`db/roles.sql`](../../db/roles.sql), PostGIS, base de tests `cofrial_test` y base interna de Grafana | T-002, T-003, T-005 |
 | `compose.dev.yml` | Entorno local completo: base, web, nginx, worker, planificador, compilación de assets, Grafana y las cinco réplicas del simulador IoT | T-002, T-019 |
-| `compose.prod.yml` (por crear) | EC2 web: Nginx, aplicación, worker, planificador y Grafana | [T-024](../../tasks/T-024-despliegue-web-y-balanceador/README.md) |
+| `web/Dockerfile.prod` | Imágenes de producción `app` (PHP-FPM con el código, dependencias sin las de desarrollo y assets compilados) y `nginx` (archivos públicos); contexto: raíz del repositorio | [T-024](../../tasks/T-024-despliegue-web-y-balanceador/README.md) |
+| `compose.prod.yml` | EC2 web: Nginx, aplicación, worker, planificador y Grafana; cada servicio con su `.env` de `/etc/cofrial`. Lo levanta [`infra/aws/arranque/web.sh`](../aws/arranque/web.sh) | T-024 |
 | `compose.iot.yml` | Nodo IoT: cinco contenedores del simulador con solo las variables `IOT_*`; se despliega en [T-025](../../tasks/T-025-despliegue-nodo-iot/README.md) | [T-019](../../tasks/T-019-simulador-iot/README.md), T-025 |
 | [`../../apps/iot-simulator/Dockerfile`](../../apps/iot-simulator/Dockerfile) | Imagen Python 3.12 del simulador (`runtime`) y de sus tests (`test`) | T-019 |
 
@@ -123,4 +124,5 @@ La última provoca una ruptura de frío en el grupo 2 para la demo ([`apps/iot-s
 - `assets` corre `vite build --watch`: al guardar una vista Blade, CSS o JS recompila en ~1 s y basta con recargar la página (no hay recarga automática). En modo watch Tailwind conserva las clases que ya vio, así que una clase que quitas queda en el CSS hasta reiniciar el servicio (`docker compose -f infra/docker/compose.dev.yml restart assets`). `node_modules` y `public/build` viven en `apps/web` y están ignorados por git.
 - Nginx resuelve `web` y `grafana` con el DNS interno de Docker en cada petición, así que recrear un contenedor no deja la aplicación en 502.
 - Los tests (`php artisan test`) usan la base `cofrial_test`, también dentro del contenedor: `phpunit.xml` fuerza su entorno y nunca tocan la base de desarrollo `cofrial`. `db/01-inicializar-dev.sh` crea `cofrial_test` con PostGIS; si tu volumen es anterior a T-003, recréalo con `down -v`.
-- En local todos los servicios reciben el `.env` completo. En producción (T-024) cada servicio debe recibir solo sus credenciales.
+- En local todos los servicios reciben el `.env` completo. En producción (T-024) cada servicio recibe solo sus credenciales: `app.env` (Laravel con `app_rw`), `migracion.env` (solo la instancia que migra) y `grafana.env`.
+- En producción el punto de entrada ejecuta `php artisan optimize` al arrancar (configuración, rutas, vistas y eventos en caché) y los contenedores corren como `www-data`.

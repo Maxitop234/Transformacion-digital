@@ -51,8 +51,9 @@ Resources:
       Port: 80
       TargetType: instance
       # /health responde 200 solo si Laravel llega a la base (ARCHITECTURE.md §3.3).
+      # Cada 10 s con 2 fallas: una instancia caída sale de rotación en ~20 s.
       HealthCheckPath: /health
-      HealthCheckIntervalSeconds: 30
+      HealthCheckIntervalSeconds: 10
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 2

@@ -34,8 +34,20 @@ EOF
 )
 parametros="$(python3 -c 'import json, sys; print(json.dumps({"commands": sys.stdin.read().splitlines(), "executionTimeout": ["1800"]}))' <<<"$comando")"
 
+grupo=""
+if [[ "$rol" == "web" ]]; then
+    grupo="$(aws elbv2 describe-target-groups --names cofrial-web --query 'TargetGroups[0].TargetGroupArn' --output text)"
+fi
+
 while read -r nombre id; do
     echo "== $nombre ($id)"
+    if [[ -n "$grupo" ]]; then
+        # Sin errores para los usuarios: la instancia sale de rotación antes de
+        # reconstruirse (el balanceador termina las peticiones en curso, 30 s).
+        aws elbv2 deregister-targets --target-group-arn "$grupo" --targets "Id=$id"
+        aws elbv2 wait target-deregistered --target-group-arn "$grupo" --targets "Id=$id"
+        echo "   fuera del balanceador"
+    fi
     envio="$(aws ssm send-command --instance-ids "$id" --document-name AWS-RunShellScript \
         --comment "cofrial desplegar $rol" --parameters "$parametros" \
         --query Command.CommandId --output text)"
@@ -49,5 +61,14 @@ while read -r nombre id; do
     aws ssm get-command-invocation --command-id "$envio" --instance-id "$id" \
         --query StandardOutputContent --output text | grep -E '^cofrial-' || true
     echo "   estado: $estado"
+    if [[ -n "$grupo" ]]; then
+        # Vuelve a rotación aunque el despliegue falle: si quedó mal, el
+        # chequeo de salud la mantiene fuera igual.
+        aws elbv2 register-targets --target-group-arn "$grupo" --targets "Id=$id"
+        if [[ "$estado" == "Success" ]]; then
+            aws elbv2 wait target-in-service --target-group-arn "$grupo" --targets "Id=$id"
+            echo "   de vuelta en el balanceador, sana"
+        fi
+    fi
     [[ "$estado" == "Success" ]] || exit 1
 done <<<"$instancias"

@@ -85,7 +85,7 @@ La red completa es el stack `cofrial-red` ([`infra/aws/red.yaml`](../infra/aws/r
 | EC2 web 2 (zona b) | t3.medium | Igual que web 1; ambas atienden a la vez | 0005 |
 | Nodo IoT (zona a) | t3.small | 5 contenedores del simulador × 10 camiones | 0006 |
 
-El ALB revisa `GET /health` cada 30 s y saca de rotación la instancia que falle. El nodo IoT no se duplica: si falla, solo se pausa la simulación y los contenedores se reinician solos (`restart: unless-stopped`).
+El ALB revisa `GET /health` cada 10 s y saca de rotación la instancia que falle dos veces seguidas (unos 20 s). Las EC2 se crean con los stacks `cofrial-web` y `cofrial-iot` ([`infra/aws`](../infra/aws/README.md)): cada una clona el repositorio, lee sus secretos de SSM Parameter Store y construye sus contenedores (`compose.prod.yml`, `compose.iot.yml`). Los despliegues sacan cada EC2 web del balanceador antes de reconstruirla, así que no cortan el servicio. El nodo IoT no se duplica: si falla, solo se pausa la simulación y los contenedores se reinician solos (`restart: unless-stopped`).
 
 ### 3.4 Datos
 
@@ -101,7 +101,7 @@ Volumen esperado de telemetría: 50 camiones × 1 lectura cada 30 s = 144.000 fi
 
 Alarmas de CloudWatch que notifican por SNS al correo del equipo:
 
-- Instancia no saludable en el ALB.
+- Menos de dos instancias sanas en el ALB (cubre una instancia que falla `/health` y una detenida).
 - Chequeo de estado fallido en una EC2.
 - CPU sobre 80 %.
 - Poco espacio libre en RDS.
@@ -213,13 +213,14 @@ Consideraciones del Learner Lab que el despliegue debe tolerar:
 - Las IP públicas de las EC2 cambian: solo se referencia el DNS del ALB.
 - No se pueden crear roles IAM propios: se usa el perfil de instancia provisto por el laboratorio (`LabInstanceProfile`).
 - La infraestructura se crea y se borra con stacks de CloudFormation (ADR-0018), para no dejar recursos sueltos que consuman el presupuesto. Las restricciones encontradas están en [`infra/aws/README.md`](../infra/aws/README.md#restricciones-del-learner-lab).
-- Verificar al desplegar que la cuenta permite RDS Multi-AZ y los tipos de instancia elegidos; si no, registrar la desviación en un ADR.
+- La cuenta permite RDS Multi-AZ y los tipos de instancia elegidos (comprobado el 2026-11-12); no hubo desviaciones del diseño.
+- Los secretos de producción viven en SSM Parameter Store (`/cofrial/prod/`, `SecureString`, capa estándar sin costo) y se accede a las EC2 por Run Command de Systems Manager, sin SSH.
 
 ## 6. Alta disponibilidad y continuidad
 
 | Falla | Comportamiento esperado |
 | --- | --- |
-| Cae una EC2 web | El ALB la saca de rotación en el siguiente health check; la otra sigue atendiendo |
+| Cae una EC2 web | El ALB la saca de rotación en unos 20 s (dos health checks); la otra sigue atendiendo y las sesiones se conservan porque viven en la base. En esos segundos algunas peticiones pueden recibir 502 (medido: 4 de 60 al reiniciar una instancia) |
 | Cae la zona A | RDS conmuta a la réplica de la zona B; el ALB envía todo a EC2 web 2 |
 | Cae el nodo IoT | Se pausa la telemetría; ventas y CRM no se ven afectados |
 | No responde la API de IA | El ticket queda para clasificación manual; el asistente ofrece derivar a un ejecutivo |

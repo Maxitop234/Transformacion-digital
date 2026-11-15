@@ -26,6 +26,7 @@ Los ADR 0001 a 0011 provienen de las fichas de decisión del informe de diseño 
 | [0016](0016-esquema-por-migraciones.md) | Esquema en español gestionado por migraciones de Laravel | Aceptada | 2026-11-11 |
 | [0017](0017-telemetria-sin-particionar.md) | Telemetría sin particionar en el prototipo | Aceptada | 2026-11-10 |
 | [0018](0018-infraestructura-con-cloudformation.md) | Infraestructura de AWS como plantillas de CloudFormation | Aceptada | 2026-11-12 |
+| [0019](0019-secretos-parameter-store-y-run-command.md) | Secretos en Parameter Store y acceso a las EC2 por Run Command | Aceptada | 2026-11-15 |
 
 ## Estados
 
